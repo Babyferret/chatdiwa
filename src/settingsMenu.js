@@ -1,4 +1,5 @@
-import { prompt } from "enquirer";
+import enquirer from "enquirer";
+const { prompt } = enquirer;
 import { saveConfig, VOICES, VOICE_CHOICES, TEMPLATE_CHOICES } from "./config.js";
 
 export async function openSettingsMenu(config) {

@@ -1,4 +1,5 @@
-import { prompt } from "enquirer";
+import enquirer from "enquirer";
+const { prompt } = enquirer;
 import {
   defaultConfig,
   saveConfig,

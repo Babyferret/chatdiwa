@@ -12,7 +12,7 @@ const PUBLIC_DIR = resolve(import.meta.dirname, "..", "public");
 const MIME_TYPES = {
   ".html": "text/html",
   ".mp3": "audio/mpeg",
-  ".svg": "image/svg+xml",
+  ".png": "image/png",
 };
 
 async function readJsonBody(req) {
@@ -35,9 +35,9 @@ export function startServer(port, config, manager) {
         return;
       }
 
-      if (pathname === "/logo.svg") {
-        const body = await readFile(resolve(PUBLIC_DIR, "logo.svg"));
-        res.writeHead(200, { "Content-Type": MIME_TYPES[".svg"] });
+      if (pathname === "/logo.png") {
+        const body = await readFile(resolve(PUBLIC_DIR, "logo.png"));
+        res.writeHead(200, { "Content-Type": MIME_TYPES[".png"] });
         res.end(body);
         return;
       }

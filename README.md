@@ -19,8 +19,10 @@
 2. เปิด Terminal แล้วพิมพ์:
 
 ```
-npx github:Babyferret/chatdiwa
+npx https://github.com/Babyferret/chatdiwa/archive/refs/heads/master.tar.gz
 ```
+
+(ใช้ลิงก์ tarball แทน `npx github:Babyferret/chatdiwa` เพราะแบบหลังต้องมี **Git** ติดตั้งอยู่ในเครื่องด้วย ส่วนแบบ tarball ใช้แค่ Node.js อย่างเดียวพอ — ยังได้โค้ดล่าสุดจาก branch `master` เสมอเหมือนกัน)
 
 ทั้งสองวิธีให้ผลเหมือนกันทุกประการ — `run.bat` แค่ห่อคำสั่งข้างบนไว้ให้ไม่ต้องเปิด Terminal เอง
 

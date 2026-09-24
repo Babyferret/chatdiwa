@@ -50,7 +50,7 @@ exit /b
 echo Node.js found. Starting ChatDiWa (always fetches the latest version from GitHub)...
 echo npm may ask "Ok to proceed? (y)" the first time on this download - type y and press Enter.
 echo.
-call npx github:Babyferret/chatdiwa
+call npx https://github.com/Babyferret/chatdiwa/archive/refs/heads/master.tar.gz
 echo.
 echo ChatDiWa has stopped.
 pause

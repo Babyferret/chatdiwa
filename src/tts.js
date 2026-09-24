@@ -7,7 +7,10 @@ export const AUDIO_CACHE_DIR = resolve(process.cwd(), ".chatdiwa-audio-cache");
 mkdirSync(AUDIO_CACHE_DIR, { recursive: true });
 
 export async function synthesizeToFile(text, voice) {
-  const tts = new EdgeTTS({ voice });
+  // e.g. "th-TH-NiwatNeural" -> "th-TH", so the SSML <speak xml:lang> tag
+  // matches the voice's own locale instead of the library's zh-CN default.
+  const lang = voice.split("-").slice(0, 2).join("-");
+  const tts = new EdgeTTS({ voice, lang });
   const filename = `${randomUUID()}.mp3`;
   const filepath = resolve(AUDIO_CACHE_DIR, filename);
   await tts.ttsPromise(text, filepath);

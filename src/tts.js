@@ -1,5 +1,5 @@
 import { EdgeTTS } from "node-edge-tts";
-import { mkdirSync, readdirSync, unlinkSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 import { readdir, stat, unlink } from "node:fs/promises";
 import { resolve } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -7,25 +7,20 @@ import { randomUUID } from "node:crypto";
 export const AUDIO_CACHE_DIR = resolve(process.cwd(), ".chatdiwa-audio-cache");
 mkdirSync(AUDIO_CACHE_DIR, { recursive: true });
 
-// Anything left over from a previous run is definitely stale (this process
-// just started), so clear it out immediately rather than waiting for the
-// first sweep below.
-for (const entry of readdirSync(AUDIO_CACHE_DIR)) {
-  try {
-    unlinkSync(resolve(AUDIO_CACHE_DIR, entry));
-  } catch {
-    // ignore
-  }
-}
-
 // A file is normally deleted by the /audio/ route right after it's served
 // (see server.js), but that only happens if some client actually requests
-// it - if no OBS/browser view is connected (or connected but hasn't reached
-// this item in its own playback queue yet) the file never gets fetched and
-// would otherwise sit on disk forever. This is the safety net: anything
-// older than a couple of minutes is well past any normal playback delay, so
-// it's safe to assume nothing is coming for it.
-const MAX_AUDIO_AGE_MS = 2 * 60 * 1000;
+// it - if no OBS/browser view is connected (or connected but backed up in
+// its own unbounded playback queue during a burst) the file never gets
+// fetched and would otherwise sit on disk forever. This is the safety net:
+// age-based, not an unconditional wipe, for two reasons - (1) a burst can
+// legitimately leave a file waiting well past a short window, so the
+// threshold has to be generous enough that it never outraces a real
+// client still working through a backlog, and (2) two instances launched
+// from the same folder (e.g. an accidental double-launch while already
+// live) would otherwise let one instance's cleanup delete the other's
+// in-flight files - only touching files old enough to be implausible as
+// "still in flight" avoids that regardless of which instance runs it.
+const MAX_AUDIO_AGE_MS = 10 * 60 * 1000;
 
 export function isStale(mtimeMs, now, maxAgeMs = MAX_AUDIO_AGE_MS) {
   return now - mtimeMs > maxAgeMs;
@@ -52,6 +47,10 @@ async function sweepStaleAudioFiles() {
   }
 }
 
+// Runs once immediately (catches anything left over from a previous run,
+// without the blocking unconditional wipe this replaced) and then on an
+// interval; both are async and never block startup.
+sweepStaleAudioFiles();
 setInterval(sweepStaleAudioFiles, 60 * 1000).unref();
 
 export function formatPercent(value) {

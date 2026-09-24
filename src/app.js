@@ -1,7 +1,6 @@
-import { loadConfig } from "./config.js";
-import { runFirstTimeWizard } from "./wizard.js";
+import { loadConfig, defaultConfig, saveConfig } from "./config.js";
 import { startServer } from "./server.js";
-import { connectToTikTok } from "./tiktokConnection.js";
+import { createTikTokManager } from "./tiktokConnection.js";
 import { processComment } from "./pipeline/index.js";
 import { createQueue } from "./pipeline/queue.js";
 import { synthesizeToFile } from "./tts.js";
@@ -10,13 +9,16 @@ import { openControlPanelWindow } from "./appWindow.js";
 export async function run() {
   let config = loadConfig();
   if (!config) {
-    config = await runFirstTimeWizard();
+    config = defaultConfig();
+    saveConfig(config);
   }
 
-  const { broadcastSpeech } = startServer(config.port, config);
+  const manager = createTikTokManager();
+  const { broadcastComment } = startServer(config.port, config, manager);
+
   const controlPanelUrl = `http://localhost:${config.port}`;
   console.log(`\nเปิดใช้งานที่ ${controlPanelUrl}`);
-  console.log(`- เปิดลิงก์นี้ในเบราว์เซอร์ปกติเพื่อดูแชท/ตั้งค่า`);
+  console.log(`- เปิดลิงก์นี้ในเบราว์เซอร์ปกติเพื่อดูแชท/ตั้งค่า/เชื่อมต่อ TikTok`);
   console.log(
     `- เพิ่ม ${controlPanelUrl}/?obs=1 เป็น Browser Source ใน OBS เพื่อให้เสียงเข้าสตรีม (ซ่อน source นี้ได้ เสียงยังออกปกติ)\n`,
   );
@@ -25,7 +27,7 @@ export async function run() {
     console.log("(เปิดหน้าต่างแอปอัตโนมัติไม่สำเร็จ เปิดลิงก์ด้านบนเองในเบราว์เซอร์ได้เลย)\n");
   }
 
-  const queue = createQueue({ maxSize: config.maxQueueSize });
+  let queue = createQueue({ maxSize: config.maxQueueSize });
   let draining = false;
 
   async function drainQueue() {
@@ -34,8 +36,14 @@ export async function run() {
     while (queue.size > 0) {
       const item = queue.dequeue();
       try {
-        const { filename } = await synthesizeToFile(item.speech, config.voice);
-        broadcastSpeech(filename, { user: item.user, message: item.text });
+        const voiceConfig = {
+          voice: config.voice,
+          rate: config.rate,
+          pitch: config.pitch,
+          volume: config.volume,
+        };
+        const { filename } = await synthesizeToFile(item.speech, voiceConfig);
+        broadcastComment({ user: item.user, message: item.displayText, url: `/audio/${filename}` });
       } catch (err) {
         console.error("TTS error:", err.message);
       }
@@ -43,28 +51,39 @@ export async function run() {
     draining = false;
   }
 
-  const tiktok = connectToTikTok(config.tiktokUsername);
-
-  tiktok.on("connected", () => {
-    console.log(`เชื่อมต่อ TikTok LIVE ของ @${config.tiktokUsername} แล้ว`);
+  manager.on("roomChanged", () => {
+    queue = createQueue({ maxSize: config.maxQueueSize });
   });
 
-  tiktok.on("disconnected", () => {
-    console.log("การเชื่อมต่อ TikTok หลุด กำลังลองเชื่อมต่อใหม่...");
+  manager.on("status", ({ status, username, error }) => {
+    if (status === "connecting") console.log(`กำลังเชื่อมต่อ @${username}...`);
+    if (status === "connected") console.log(`เชื่อมต่อ TikTok LIVE ของ @${username} แล้ว`);
+    if (status === "error") console.error(`TikTok: ${error}`);
+    if (status === "idle") console.log("ตัดการเชื่อมต่อ TikTok แล้ว");
   });
 
-  tiktok.on("error", (err) => {
-    console.error("เชื่อมต่อ TikTok ไม่สำเร็จ:", err.message);
+  manager.on("error", () => {
+    // Surfaced via the "status" event above; this listener only exists so
+    // Node's EventEmitter doesn't throw on an unhandled "error" event.
   });
 
-  tiktok.on("chat", ({ user, text }) => {
-    const speech = processComment({ user, text }, config);
-    if (speech) {
-      console.log(`[${user}] ${text}`);
-      queue.enqueue({ user, text, speech });
-      drainQueue();
+  manager.on("chat", ({ user, text }) => {
+    const result = processComment({ user, text }, config);
+    if (!result) return;
+
+    if (!result.speech) {
+      broadcastComment({ user: result.user, message: result.displayText });
+      return;
     }
+
+    console.log(`[${result.user}] ${result.displayText}`);
+    queue.enqueue(result);
+    drainQueue();
   });
+
+  if (config.tiktokUsername) {
+    manager.connect(config.tiktokUsername);
+  }
 
   console.log("กด Ctrl+C เพื่อปิดโปรแกรม\n");
 }

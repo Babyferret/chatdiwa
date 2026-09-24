@@ -19,55 +19,104 @@ export function mapChatEvent(data) {
   };
 }
 
-export function connectToTikTok(username) {
+function errorMessage(err) {
+  if (err instanceof Error) return err.message;
+  return err?.info ?? "Unknown TikTok connection error";
+}
+
+// Manages at most one Room connection at a time. `connect`/`disconnect` can
+// be called repeatedly to switch Rooms; a manual `disconnect` suppresses
+// auto-reconnect until the next explicit `connect`, whereas an unexpected
+// drop keeps retrying with backoff.
+export function createTikTokManager() {
   const emitter = new EventEmitter();
-  const connection = new TikTokLiveConnection(username, {});
+  let connection = null;
+  let reconnectTimer = null;
   let attempt = 0;
+  let manuallyStopped = true;
+  let username = null;
+  let status = "idle";
 
-  connection.on(WebcastEvent.CHAT, (data) => {
-    const chat = mapChatEvent(data);
-    if (chat.text) {
-      emitter.emit("chat", chat);
+  function setStatus(next, extra = {}) {
+    status = next;
+    emitter.emit("status", { status, username, ...extra });
+  }
+
+  function teardownConnection() {
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
     }
-  });
-
-  // EventEmitter throws if "error" has no listener at all, which would
-  // otherwise crash the process on any post-connect socket error.
-  // The library emits a plain { info, exception } object here, not an Error.
-  connection.on(ControlEvent.ERROR, (err) => {
-    if (err instanceof Error) {
-      emitter.emit("error", err);
-    } else {
-      emitter.emit("error", new Error(err?.info ?? "Unknown TikTok connection error"));
+    if (connection) {
+      connection.removeAllListeners();
+      connection.disconnect().catch(() => {});
+      connection = null;
     }
-  });
+  }
 
-  function connect() {
+  function scheduleReconnect() {
+    const delay = RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)];
+    attempt += 1;
+    reconnectTimer = setTimeout(attemptConnect, delay);
+  }
+
+  function attemptConnect() {
+    connection = new TikTokLiveConnection(username, {});
+
+    connection.on(WebcastEvent.CHAT, (data) => {
+      const chat = mapChatEvent(data);
+      if (chat.text) emitter.emit("chat", chat);
+    });
+
+    // EventEmitter throws if "error" has no listener at all, which would
+    // otherwise crash the process on any post-connect socket error.
+    connection.on(ControlEvent.ERROR, (err) => {
+      emitter.emit("error", new Error(errorMessage(err)));
+    });
+
+    connection.on(ControlEvent.DISCONNECTED, () => {
+      if (manuallyStopped) return;
+      setStatus("error", { error: "การเชื่อมต่อหลุด กำลังลองเชื่อมต่อใหม่" });
+      scheduleReconnect();
+    });
+
+    setStatus("connecting");
     connection
       .connect()
       .then((state) => {
         attempt = 0;
+        setStatus("connected");
         emitter.emit("connected", state);
       })
       .catch((err) => {
-        emitter.emit("error", err);
-        scheduleReconnect();
+        setStatus("error", { error: errorMessage(err) });
+        emitter.emit("error", new Error(errorMessage(err)));
+        if (!manuallyStopped) scheduleReconnect();
       });
   }
 
-  connection.on(ControlEvent.DISCONNECTED, () => {
-    emitter.emit("disconnected");
-    scheduleReconnect();
-  });
+  return {
+    connect(nextUsername) {
+      teardownConnection();
+      manuallyStopped = false;
+      attempt = 0;
+      username = nextUsername;
+      emitter.emit("roomChanged");
+      attemptConnect();
+    },
 
-  function scheduleReconnect() {
-    const delay =
-      RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)];
-    attempt += 1;
-    setTimeout(connect, delay);
-  }
+    disconnect() {
+      manuallyStopped = true;
+      teardownConnection();
+      username = null;
+      setStatus("idle");
+      emitter.emit("roomChanged");
+    },
 
-  connect();
+    getStatus() {
+      return { status, username };
+    },
 
-  return emitter;
+    on: (event, listener) => emitter.on(event, listener),
+  };
 }

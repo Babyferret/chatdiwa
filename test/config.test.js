@@ -47,3 +47,35 @@ test("does not mutate the current config object", () => {
   sanitizeConfigUpdate(current, { voice: VOICES.female });
   assert.equal(current.voice, VOICES.male);
 });
+
+test("applies a valid readMode and parses triggerPrefixes from text", () => {
+  const current = defaultConfig();
+  const next = sanitizeConfigUpdate(current, {
+    readMode: "prefix",
+    triggerPrefixes: ".\n/, !",
+  });
+  assert.equal(next.readMode, "prefix");
+  assert.deepEqual(next.triggerPrefixes, [".", "/", "!"]);
+});
+
+test("ignores an invalid readMode and keeps the current one", () => {
+  const current = { ...defaultConfig(), readMode: "all" };
+  const next = sanitizeConfigUpdate(current, { readMode: "not-a-real-mode" });
+  assert.equal(next.readMode, "all");
+});
+
+test("applies valid rate/pitch/volume within -50 to 50", () => {
+  const current = defaultConfig();
+  const next = sanitizeConfigUpdate(current, { rate: 30, pitch: -20, volume: 0 });
+  assert.equal(next.rate, 30);
+  assert.equal(next.pitch, -20);
+  assert.equal(next.volume, 0);
+});
+
+test("ignores out-of-range or non-integer rate/pitch/volume", () => {
+  const current = defaultConfig();
+  const next = sanitizeConfigUpdate(current, { rate: 100, pitch: -100, volume: 1.5 });
+  assert.equal(next.rate, current.rate);
+  assert.equal(next.pitch, current.pitch);
+  assert.equal(next.volume, current.volume);
+});

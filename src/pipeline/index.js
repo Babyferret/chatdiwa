@@ -1,6 +1,7 @@
 import { capLength } from "./lengthCap.js";
 import { shouldKeep } from "./filter.js";
 import { formatSpeech } from "./format.js";
+import { checkTrigger } from "./readMode.js";
 
 export function processComment(comment, config) {
   const capped = {
@@ -17,5 +18,11 @@ export function processComment(comment, config) {
     return null;
   }
 
-  return formatSpeech(capped, config.template);
+  const trigger = checkTrigger(capped.text, config);
+  if (!trigger.matches) {
+    return { user: capped.user, displayText: capped.text, speech: null };
+  }
+
+  const speech = formatSpeech({ user: capped.user, text: trigger.text }, config.template);
+  return { user: capped.user, displayText: capped.text, speech };
 }

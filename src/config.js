@@ -8,15 +8,12 @@ export const VOICES = {
   female: "th-TH-PremwadeeNeural",
 };
 
-export const VOICE_CHOICES = [
-  { name: "male", message: "ชาย (th-TH-NiwatNeural)" },
-  { name: "female", message: "หญิง (th-TH-PremwadeeNeural)" },
-];
-
 export const TEMPLATE_CHOICES = [
   { name: "name-and-message", message: "ชื่อ พูดว่า ข้อความ" },
   { name: "message-only", message: "ข้อความอย่างเดียว" },
 ];
+
+export const READ_MODES = ["all", "prefix"];
 
 export function defaultConfig() {
   return {
@@ -28,6 +25,11 @@ export function defaultConfig() {
     maxQueueSize: 20,
     blockedUsers: [],
     bannedWords: [],
+    readMode: "all",
+    triggerPrefixes: [],
+    rate: 0,
+    pitch: 0,
+    volume: 0,
   };
 }
 
@@ -82,6 +84,21 @@ export function sanitizeConfigUpdate(current, updates) {
 
   if (typeof updates.bannedWords === "string") {
     next.bannedWords = parseWordList(updates.bannedWords);
+  }
+
+  if (READ_MODES.includes(updates.readMode)) {
+    next.readMode = updates.readMode;
+  }
+
+  if (typeof updates.triggerPrefixes === "string") {
+    next.triggerPrefixes = parseWordList(updates.triggerPrefixes);
+  }
+
+  for (const field of ["rate", "pitch", "volume"]) {
+    const value = updates[field];
+    if (Number.isInteger(value) && value >= -50 && value <= 50) {
+      next[field] = value;
+    }
   }
 
   return next;

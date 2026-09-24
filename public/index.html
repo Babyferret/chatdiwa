@@ -27,6 +27,7 @@
       }
       header {
         display: flex;
+        align-items: center;
         gap: 8px;
         padding: 10px 14px;
         border-bottom: 1px solid #2a2a2e;
@@ -44,6 +45,30 @@
       header button.active {
         background: #3b82f6;
         border-color: #3b82f6;
+      }
+      #statusBadge {
+        margin-left: auto;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+      #statusBadge .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #666;
+        flex-shrink: 0;
+      }
+      #statusBadge.connected .dot {
+        background: #4ade80;
+      }
+      #statusBadge.connecting .dot {
+        background: #facc15;
+      }
+      #statusBadge.error .dot {
+        background: #f87171;
       }
       .panel {
         flex: 1;
@@ -65,6 +90,9 @@
         font-size: 14px;
         word-break: break-word;
       }
+      #chatLog .line.silent {
+        opacity: 0.55;
+      }
       #chatLog .user {
         color: #60a5fa;
         font-weight: bold;
@@ -80,8 +108,26 @@
         overflow-y: auto;
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 22px;
         max-width: 480px;
+      }
+      section.group {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        border-top: 1px solid #222327;
+        padding-top: 16px;
+      }
+      section.group:first-child {
+        border-top: none;
+        padding-top: 0;
+      }
+      section.group > h2 {
+        margin: 0;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #888;
       }
       label.field {
         display: flex;
@@ -89,6 +135,7 @@
         gap: 6px;
         font-size: 14px;
       }
+      input[type="text"],
       input[type="number"],
       textarea {
         background: #1b1c1f;
@@ -100,18 +147,61 @@
         font-family: inherit;
       }
       textarea {
-        min-height: 70px;
+        min-height: 60px;
         resize: vertical;
       }
       .radio-row {
         display: flex;
         gap: 16px;
         font-weight: normal;
+        flex-wrap: wrap;
       }
       .radio-row label {
         display: flex;
         align-items: center;
         gap: 6px;
+      }
+      .slider-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .slider-row input[type="range"] {
+        flex: 1;
+      }
+      .slider-row output {
+        width: 46px;
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        color: #aaa;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+      }
+      .row input {
+        flex: 1;
+      }
+      button {
+        font-family: inherit;
+      }
+      button.primary {
+        background: #3b82f6;
+        border: none;
+        color: white;
+        padding: 9px 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      button.secondary {
+        background: #2a2b2f;
+        border: 1px solid #3a3a3f;
+        color: #eee;
+        padding: 9px 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
       }
       button.save {
         align-self: flex-start;
@@ -139,21 +229,59 @@
       <header>
         <button data-tab="chat" class="active">แชท</button>
         <button data-tab="settings">ตั้งค่า</button>
+        <span id="statusBadge"><span class="dot"></span><span id="statusText">ยังไม่เชื่อมต่อ</span></span>
       </header>
       <div class="panel active" id="panel-chat">
         <div id="chatLog"><div class="empty">รอข้อความแชท...</div></div>
       </div>
       <div class="panel" id="panel-settings">
         <form id="settingsForm">
-          <label class="field">
-            เสียง
-            <div class="radio-row">
-              <label><input type="radio" name="voiceKey" value="male" /> ชาย</label>
-              <label><input type="radio" name="voiceKey" value="female" /> หญิง</label>
-            </div>
-          </label>
-          <label class="field">
-            รูปแบบข้อความ
+          <section class="group">
+            <h2>การเชื่อมต่อ TikTok</h2>
+            <label class="field">
+              TikTok username (ไม่ต้องใส่ @)
+              <div class="row">
+                <input type="text" id="usernameInput" placeholder="เช่น mytiktokname" />
+                <button type="button" class="primary" id="connectBtn">Connect</button>
+                <button type="button" class="secondary" id="disconnectBtn">Disconnect</button>
+              </div>
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>เสียง</h2>
+            <label class="field">
+              เพศเสียง
+              <div class="radio-row">
+                <label><input type="radio" name="voiceKey" value="male" /> ชาย</label>
+                <label><input type="radio" name="voiceKey" value="female" /> หญิง</label>
+              </div>
+            </label>
+            <label class="field">
+              ความเร็ว (rate)
+              <div class="slider-row">
+                <input type="range" name="rate" min="-50" max="50" step="1" />
+                <output data-for="rate"></output>
+              </div>
+            </label>
+            <label class="field">
+              ระดับเสียงสูงต่ำ (pitch)
+              <div class="slider-row">
+                <input type="range" name="pitch" min="-50" max="50" step="1" />
+                <output data-for="pitch"></output>
+              </div>
+            </label>
+            <label class="field">
+              ความดัง (volume)
+              <div class="slider-row">
+                <input type="range" name="volume" min="-50" max="50" step="1" />
+                <output data-for="volume"></output>
+              </div>
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>รูปแบบข้อความ</h2>
             <div class="radio-row">
               <label
                 ><input type="radio" name="template" value="name-and-message" />
@@ -164,23 +292,43 @@
                 ข้อความอย่างเดียว</label
               >
             </div>
-          </label>
-          <label class="field">
-            ความยาวข้อความสูงสุด (ตัวอักษร)
-            <input type="number" name="maxMessageLength" min="1" />
-          </label>
-          <label class="field">
-            จำนวนคิวสูงสุด
-            <input type="number" name="maxQueueSize" min="1" />
-          </label>
-          <label class="field">
-            บล็อก username (บรรทัดละ 1 ชื่อ หรือคั่นด้วย ,)
-            <textarea name="blockedUsers"></textarea>
-          </label>
-          <label class="field">
-            คำที่ไม่อ่านออกเสียง (บรรทัดละ 1 คำ หรือคั่นด้วย ,)
-            <textarea name="bannedWords"></textarea>
-          </label>
+          </section>
+
+          <section class="group">
+            <h2>อ่านคอมเมนต์แบบไหน (Read Mode)</h2>
+            <div class="radio-row">
+              <label><input type="radio" name="readMode" value="all" /> อ่านทั้งหมด</label>
+              <label
+                ><input type="radio" name="readMode" value="prefix" />
+                อ่านเฉพาะที่ขึ้นต้นด้วย...</label
+              >
+            </div>
+            <label class="field" id="triggerPrefixesField">
+              ตัวอักษรนำหน้า (บรรทัดละ 1 ตัว หรือคั่นด้วย ,) เช่น . หรือ /
+              <textarea name="triggerPrefixes"></textarea>
+            </label>
+          </section>
+
+          <section class="group">
+            <h2>ตัวกรองอื่นๆ</h2>
+            <label class="field">
+              ความยาวข้อความสูงสุด (ตัวอักษร)
+              <input type="number" name="maxMessageLength" min="1" />
+            </label>
+            <label class="field">
+              จำนวนคิวสูงสุด
+              <input type="number" name="maxQueueSize" min="1" />
+            </label>
+            <label class="field">
+              บล็อก username (บรรทัดละ 1 ชื่อ หรือคั่นด้วย ,)
+              <textarea name="blockedUsers"></textarea>
+            </label>
+            <label class="field">
+              คำที่ไม่อ่านออกเสียง (บรรทัดละ 1 คำ หรือคั่นด้วย ,)
+              <textarea name="bannedWords"></textarea>
+            </label>
+          </section>
+
           <div style="display: flex; align-items: center; gap: 12px">
             <button type="submit" class="save">บันทึก</button>
             <span id="saveStatus">บันทึกแล้ว</span>
@@ -195,10 +343,10 @@
       if (isObsMode) document.getElementById("app").style.display = "none";
 
       // --- tabs ---
-      document.querySelectorAll("header button").forEach((btn) => {
+      document.querySelectorAll("header button[data-tab]").forEach((btn) => {
         btn.addEventListener("click", () => {
           document
-            .querySelectorAll("header button")
+            .querySelectorAll("header button[data-tab]")
             .forEach((b) => b.classList.remove("active"));
           document
             .querySelectorAll(".panel")
@@ -210,7 +358,7 @@
 
       // --- chat log ---
       const chatLog = document.getElementById("chatLog");
-      function appendLine({ user, message }) {
+      function appendLine({ user, message, url }) {
         const empty = chatLog.querySelector(".empty");
         if (empty) empty.remove();
 
@@ -218,7 +366,7 @@
           chatLog.scrollHeight - chatLog.scrollTop - chatLog.clientHeight < 30;
 
         const line = document.createElement("div");
-        line.className = "line";
+        line.className = "line" + (url ? "" : " silent");
         const userSpan = document.createElement("span");
         userSpan.className = "user";
         userSpan.textContent = user || "";
@@ -232,6 +380,30 @@
           chatLog.removeChild(chatLog.firstChild);
         }
         if (wasAtBottom) chatLog.scrollTop = chatLog.scrollHeight;
+      }
+
+      function clearLog() {
+        chatLog.innerHTML = '<div class="empty">รอข้อความแชท...</div>';
+      }
+
+      // --- status badge ---
+      const statusBadge = document.getElementById("statusBadge");
+      const statusText = document.getElementById("statusText");
+      const STATUS_LABELS = {
+        idle: "ยังไม่เชื่อมต่อ",
+        connecting: "กำลังเชื่อมต่อ...",
+        connected: "เชื่อมต่อแล้ว",
+        error: "เชื่อมต่อไม่สำเร็จ",
+      };
+      function applyStatus({ status, username, error }) {
+        statusBadge.className = status;
+        if (status === "connected") {
+          statusText.textContent = `${STATUS_LABELS.connected} (@${username})`;
+        } else if (status === "error") {
+          statusText.textContent = `${STATUS_LABELS.error}: ${error || ""}`;
+        } else {
+          statusText.textContent = STATUS_LABELS[status] || status;
+        }
       }
 
       // --- audio playback (OBS view only, to avoid double playback
@@ -290,38 +462,87 @@
         const ws = new WebSocket(`ws://${location.host}/ws`);
         ws.onmessage = (event) => {
           const msg = JSON.parse(event.data);
-          if (msg.type === "speak") {
+          if (msg.type === "comment") {
             appendLine(msg);
-            if (isObsMode) {
+            if (isObsMode && msg.url) {
               queue.push(msg.url);
               playNext();
             }
+          } else if (msg.type === "status") {
+            applyStatus(msg);
+          } else if (msg.type === "clear") {
+            clearLog();
           }
         };
         ws.onclose = () => setTimeout(connectWs, 1000);
       }
       connectWs();
 
-      // --- settings form (not shown in OBS mode) ---
+      // --- settings form + connection controls (not shown in OBS mode) ---
       if (!isObsMode) {
         const form = document.getElementById("settingsForm");
         const saveStatus = document.getElementById("saveStatus");
+        const usernameInput = document.getElementById("usernameInput");
+        const triggerPrefixesField = document.getElementById("triggerPrefixesField");
 
         function voiceToKey(voice) {
           return voice && voice.includes("Premwadee") ? "female" : "male";
         }
 
+        function updateTriggerFieldVisibility() {
+          const mode = form.querySelector('input[name="readMode"]:checked')?.value;
+          triggerPrefixesField.style.display = mode === "prefix" ? "flex" : "none";
+        }
+        form.querySelectorAll('input[name="readMode"]').forEach((el) => {
+          el.addEventListener("change", updateTriggerFieldVisibility);
+        });
+
+        for (const name of ["rate", "pitch", "volume"]) {
+          const slider = form.elements[name];
+          const output = form.querySelector(`output[data-for="${name}"]`);
+          slider.addEventListener("input", () => {
+            const value = Number(slider.value);
+            output.textContent = (value >= 0 ? "+" : "") + value + "%";
+          });
+        }
+
         async function loadSettings() {
           const res = await fetch("/api/config");
           const config = await res.json();
+          usernameInput.value = config.tiktokUsername || "";
           form.voiceKey.value = voiceToKey(config.voice);
           form.template.value = config.template;
+          form.readMode.value = config.readMode;
+          form.triggerPrefixes.value = (config.triggerPrefixes || []).join("\n");
           form.maxMessageLength.value = config.maxMessageLength;
           form.maxQueueSize.value = config.maxQueueSize;
           form.blockedUsers.value = (config.blockedUsers || []).join("\n");
           form.bannedWords.value = (config.bannedWords || []).join("\n");
+          for (const name of ["rate", "pitch", "volume"]) {
+            form.elements[name].value = config[name];
+            form.elements[name].dispatchEvent(new Event("input"));
+          }
+          updateTriggerFieldVisibility();
         }
         loadSettings();
+
+        async function loadStatus() {
+          const res = await fetch("/api/status");
+          applyStatus(await res.json());
+        }
+        loadStatus();
+
+        document.getElementById("connectBtn").addEventListener("click", async () => {
+          await fetch("/api/connect", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: usernameInput.value }),
+          });
+        });
+
+        document.getElementById("disconnectBtn").addEventListener("click", async () => {
+          await fetch("/api/disconnect", { method: "POST" });
+        });
 
         form.addEventListener("submit", async (e) => {
           e.preventDefault();
@@ -329,10 +550,15 @@
           const payload = {
             voiceKey: data.get("voiceKey"),
             template: data.get("template"),
+            readMode: data.get("readMode"),
+            triggerPrefixes: data.get("triggerPrefixes"),
             maxMessageLength: Number(data.get("maxMessageLength")),
             maxQueueSize: Number(data.get("maxQueueSize")),
             blockedUsers: data.get("blockedUsers"),
             bannedWords: data.get("bannedWords"),
+            rate: Number(data.get("rate")),
+            pitch: Number(data.get("pitch")),
+            volume: Number(data.get("volume")),
           };
           // server expects a resolved voice string, not the radio key
           payload.voice =

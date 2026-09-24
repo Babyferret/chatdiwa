@@ -22,7 +22,7 @@ async function readJsonBody(req) {
   return JSON.parse(Buffer.concat(chunks).toString("utf-8") || "{}");
 }
 
-export function startServer(port, config) {
+export function startServer(port, config, manager) {
   const server = createServer(async (req, res) => {
     try {
       const { pathname } = new URL(req.url, "http://localhost");
@@ -57,6 +57,42 @@ export function startServer(port, config) {
         return;
       }
 
+      if (pathname === "/api/status" && req.method === "GET") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(manager.getStatus()));
+        return;
+      }
+
+      if (pathname === "/api/connect" && req.method === "POST") {
+        let body;
+        try {
+          body = await readJsonBody(req);
+        } catch {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "Invalid JSON body" }));
+          return;
+        }
+        const username = String(body.username || "").trim().replace(/^@/, "");
+        if (!username) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "username is required" }));
+          return;
+        }
+        config.tiktokUsername = username;
+        saveConfig(config);
+        manager.connect(username);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(manager.getStatus()));
+        return;
+      }
+
+      if (pathname === "/api/disconnect" && req.method === "POST") {
+        manager.disconnect();
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(manager.getStatus()));
+        return;
+      }
+
       if (pathname.startsWith("/audio/")) {
         const filename = basename(pathname.replace("/audio/", ""));
         if (!AUDIO_FILENAME_RE.test(filename)) {
@@ -84,21 +120,23 @@ export function startServer(port, config) {
 
   const wss = new WebSocketServer({ server, path: "/ws" });
 
-  function broadcastSpeech(filename, { user, message }) {
-    const payload = JSON.stringify({
-      type: "speak",
-      url: `/audio/${filename}`,
-      user,
-      message,
-    });
+  function broadcast(payload) {
+    const message = JSON.stringify(payload);
     for (const client of wss.clients) {
       if (client.readyState === client.OPEN) {
-        client.send(payload);
+        client.send(message);
       }
     }
   }
 
+  function broadcastComment({ user, message, url = null }) {
+    broadcast({ type: "comment", user, message, url });
+  }
+
+  manager.on("status", (status) => broadcast({ type: "status", ...status }));
+  manager.on("roomChanged", () => broadcast({ type: "clear" }));
+
   server.listen(port);
 
-  return { server, broadcastSpeech };
+  return { server, broadcastComment };
 }

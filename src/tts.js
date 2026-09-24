@@ -6,11 +6,21 @@ import { randomUUID } from "node:crypto";
 export const AUDIO_CACHE_DIR = resolve(process.cwd(), ".chatdiwa-audio-cache");
 mkdirSync(AUDIO_CACHE_DIR, { recursive: true });
 
-export async function synthesizeToFile(text, voice) {
+export function formatPercent(value) {
+  return `${value >= 0 ? "+" : ""}${value}%`;
+}
+
+export async function synthesizeToFile(text, { voice, rate = 0, pitch = 0, volume = 0 }) {
   // e.g. "th-TH-NiwatNeural" -> "th-TH", so the SSML <speak xml:lang> tag
   // matches the voice's own locale instead of the library's zh-CN default.
   const lang = voice.split("-").slice(0, 2).join("-");
-  const tts = new EdgeTTS({ voice, lang });
+  const tts = new EdgeTTS({
+    voice,
+    lang,
+    rate: formatPercent(rate),
+    pitch: formatPercent(pitch),
+    volume: formatPercent(volume),
+  });
   const filename = `${randomUUID()}.mp3`;
   const filepath = resolve(AUDIO_CACHE_DIR, filename);
   await tts.ttsPromise(text, filepath);

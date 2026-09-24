@@ -5,6 +5,7 @@ import { connectToTikTok } from "./tiktokConnection.js";
 import { processComment } from "./pipeline/index.js";
 import { createQueue } from "./pipeline/queue.js";
 import { synthesizeToFile } from "./tts.js";
+import { openControlPanelWindow } from "./appWindow.js";
 
 export async function run() {
   let config = loadConfig();
@@ -13,11 +14,16 @@ export async function run() {
   }
 
   const { broadcastSpeech } = startServer(config.port, config);
-  console.log(`\nเปิดใช้งานที่ http://localhost:${config.port}`);
+  const controlPanelUrl = `http://localhost:${config.port}`;
+  console.log(`\nเปิดใช้งานที่ ${controlPanelUrl}`);
   console.log(`- เปิดลิงก์นี้ในเบราว์เซอร์ปกติเพื่อดูแชท/ตั้งค่า`);
   console.log(
-    `- เพิ่ม http://localhost:${config.port}/?obs=1 เป็น Browser Source ใน OBS เพื่อให้เสียงเข้าสตรีม (ซ่อน source นี้ได้ เสียงยังออกปกติ)\n`,
+    `- เพิ่ม ${controlPanelUrl}/?obs=1 เป็น Browser Source ใน OBS เพื่อให้เสียงเข้าสตรีม (ซ่อน source นี้ได้ เสียงยังออกปกติ)\n`,
   );
+
+  if (!openControlPanelWindow(controlPanelUrl)) {
+    console.log("(เปิดหน้าต่างแอปอัตโนมัติไม่สำเร็จ เปิดลิงก์ด้านบนเองในเบราว์เซอร์ได้เลย)\n");
+  }
 
   const queue = createQueue({ maxSize: config.maxQueueSize });
   let draining = false;

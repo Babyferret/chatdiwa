@@ -238,6 +238,30 @@
       // when the streamer also has this page open in a normal tab) ---
       const queue = [];
       let playing = false;
+      let unlockButton = null;
+
+      function showUnlockButton() {
+        if (unlockButton) return;
+        unlockButton = document.createElement("button");
+        unlockButton.textContent = "คลิกเพื่อเปิดเสียง (ทดสอบนอก OBS)";
+        Object.assign(unlockButton.style, {
+          position: "fixed",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          padding: "12px 20px",
+          fontSize: "14px",
+          cursor: "pointer",
+        });
+        unlockButton.addEventListener("click", () => {
+          unlockButton.remove();
+          unlockButton = null;
+          playing = false;
+          playNext();
+        });
+        document.body.appendChild(unlockButton);
+      }
+
       function playNext() {
         if (playing || queue.length === 0) return;
         playing = true;
@@ -251,7 +275,15 @@
           playing = false;
           playNext();
         };
-        audio.play();
+        audio.play().catch((err) => {
+          // Regular browser tabs block autoplay without a prior click;
+          // OBS/vMix/etc. (CEF-based) disable that policy, so this only
+          // happens when testing ?obs=1 directly in a normal browser.
+          console.warn("Playback blocked:", err.message);
+          playing = false;
+          queue.unshift(url);
+          showUnlockButton();
+        });
       }
 
       function connectWs() {

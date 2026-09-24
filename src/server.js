@@ -25,20 +25,22 @@ async function readJsonBody(req) {
 export function startServer(port, config) {
   const server = createServer(async (req, res) => {
     try {
-      if (req.url === "/" || req.url === "/index.html") {
+      const { pathname } = new URL(req.url, "http://localhost");
+
+      if (pathname === "/" || pathname === "/index.html") {
         const body = await readFile(resolve(PUBLIC_DIR, "index.html"));
         res.writeHead(200, { "Content-Type": MIME_TYPES[".html"] });
         res.end(body);
         return;
       }
 
-      if (req.url === "/api/config" && req.method === "GET") {
+      if (pathname === "/api/config" && req.method === "GET") {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify(config));
         return;
       }
 
-      if (req.url === "/api/config" && req.method === "POST") {
+      if (pathname === "/api/config" && req.method === "POST") {
         let updates;
         try {
           updates = await readJsonBody(req);
@@ -55,8 +57,8 @@ export function startServer(port, config) {
         return;
       }
 
-      if (req.url.startsWith("/audio/")) {
-        const filename = basename(req.url.replace("/audio/", ""));
+      if (pathname.startsWith("/audio/")) {
+        const filename = basename(pathname.replace("/audio/", ""));
         if (!AUDIO_FILENAME_RE.test(filename)) {
           res.writeHead(400);
           res.end("Bad request");

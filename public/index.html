@@ -279,7 +279,7 @@
             <path d="M16 8a5 5 0 0 1 0 8" />
             <path d="M18.5 5.5a9 9 0 0 1 0 13" />
           </svg>
-          <svg id="muteIconOff" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
+          <svg id="muteIconOff" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none">
             <polygon points="4,9 8,9 12,5 12,19 8,15 4,15" fill="currentColor" stroke="none" />
             <line x1="16" y1="8" x2="22" y2="14" />
             <line x1="22" y1="8" x2="16" y2="14" />
@@ -472,8 +472,8 @@
       const muteIconOff = document.getElementById("muteIconOff");
       function updateMuteButtonUI() {
         muteBtn.classList.toggle("muted", audioMuted);
-        muteIconOn.hidden = audioMuted;
-        muteIconOff.hidden = !audioMuted;
+        muteIconOn.style.display = audioMuted ? "none" : "";
+        muteIconOff.style.display = audioMuted ? "" : "none";
       }
 
       function addOverlayBubble({ user, message }) {

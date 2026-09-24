@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { readFile, unlink } from "node:fs/promises";
+import { readFile, unlink, stat } from "node:fs/promises";
 import { resolve, basename } from "node:path";
 import { WebSocketServer } from "ws";
 import { AUDIO_CACHE_DIR } from "./tts.js";
@@ -29,9 +29,20 @@ export function startServer(port, config, manager) {
       const { pathname } = new URL(req.url, "http://localhost");
 
       if (pathname === "/" || pathname === "/index.html") {
-        const body = await readFile(resolve(PUBLIC_DIR, "index.html"));
+        const [html, logoStat] = await Promise.all([
+          readFile(resolve(PUBLIC_DIR, "index.html"), "utf-8"),
+          stat(resolve(PUBLIC_DIR, "logo.png")),
+        ]);
+        // Browsers (and the Windows taskbar icon that follows Edge's app-mode
+        // window) cache favicons very aggressively by URL alone, ignoring
+        // normal cache headers. Appending the file's mtime busts that cache
+        // whenever logo.png is replaced, without needing a manual version bump.
+        const versioned = html.replace(
+          'href="/logo.png"',
+          `href="/logo.png?v=${logoStat.mtimeMs}"`,
+        );
         res.writeHead(200, { "Content-Type": MIME_TYPES[".html"] });
-        res.end(body);
+        res.end(versioned);
         return;
       }
 

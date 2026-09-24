@@ -10,7 +10,6 @@
 2. แตกไฟล์ zip (คลิกขวา → Extract All) จะได้โฟลเดอร์ `ChatDiWa` ที่รวมทุกอย่างไว้ในที่เดียว ไม่กระจายไฟล์ปนกับที่อื่น — จะย้ายทั้งโฟลเดอร์ไปวางไว้ที่ Desktop หรือที่ไหนก็ได้
 3. เข้าไปในโฟลเดอร์ `ChatDiWa` แล้วดับเบิลคลิก `run.bat`
    - ถ้ายังไม่มี Node.js ในเครื่อง สคริปต์จะถามก่อนว่าจะติดตั้งให้อัตโนมัติไหม (ไม่ติดตั้งเงียบๆ โดยไม่ถาม)
-   - รอบแรกๆ npm อาจถามว่า `Ok to proceed? (y)` — พิมพ์ `y` แล้วกด Enter
 4. เสร็จแล้ว! ไฟล์ตั้งค่าทุกอย่างจะถูกเก็บไว้ในโฟลเดอร์ `ChatDiWa` เดียวกันนี้ และทุกครั้งที่ดับเบิลคลิก `run.bat` จะได้เวอร์ชันล่าสุดจาก GitHub เสมอโดยอัตโนมัติ ไม่ต้องอัปเดตเอง
 
 ## เริ่มใช้งานแบบพิมพ์คำสั่งเอง (สำหรับสาย dev)
@@ -19,10 +18,11 @@
 2. เปิด Terminal แล้วพิมพ์:
 
 ```
-npx https://github.com/Babyferret/chatdiwa/archive/refs/heads/master.tar.gz
+npm install --prefix chatdiwa-app https://github.com/Babyferret/chatdiwa/archive/refs/heads/master.tar.gz
+node chatdiwa-app/node_modules/chatdiwa/bin/chatdiwa.js
 ```
 
-(ใช้ลิงก์ tarball แทน `npx github:Babyferret/chatdiwa` เพราะแบบหลังต้องมี **Git** ติดตั้งอยู่ในเครื่องด้วย ส่วนแบบ tarball ใช้แค่ Node.js อย่างเดียวพอ — ยังได้โค้ดล่าสุดจาก branch `master` เสมอเหมือนกัน)
+(ใช้ลิงก์ tarball แทน `npm install github:Babyferret/chatdiwa` เพราะแบบหลังต้องมี **Git** ติดตั้งอยู่ในเครื่องด้วย ส่วนแบบ tarball ใช้แค่ Node.js อย่างเดียวพอ — ยังได้โค้ดล่าสุดจาก branch `master` เสมอเหมือนกัน สั่ง `npm install` ซ้ำแบบนี้ทุกครั้งก่อนรันจะได้โค้ดล่าสุดเสมอ — **อย่าใช้ `npx` กับลิงก์นี้** เพราะ npx จะแคชผลลัพธ์ไว้ตาม URL แล้วไม่เช็คซ้ำว่าของจริงเปลี่ยนไปหรือยัง ทำให้ค้างอยู่เวอร์ชันเก่าถาวรแม้รันคำสั่งเดิมซ้ำ — ดู [ADR-0005](docs/adr/0005-npm-install-prefix-not-npx.md))
 
 ทั้งสองวิธีให้ผลเหมือนกันทุกประการ — `run.bat` แค่ห่อคำสั่งข้างบนไว้ให้ไม่ต้องเปิด Terminal เอง
 
@@ -100,14 +100,12 @@ TikTok LIVE Studio เรียก Browser Source ว่า **"Link"** source �
 
 ## ChatDiWa เก็บข้อมูลไว้ที่ไหนบ้าง / ถอนการติดตั้งยังไง
 
-ChatDiWa ไม่ได้ลงตัวเองเป็น "โปรแกรม" ของ Windows (ไม่มี installer ไม่มีชื่อขึ้นใน Add/Remove Programs) เพราะเป็นแค่ไฟล์ที่ `npx` ดึงมารันชั่วคราวทุกครั้ง ข้อมูลที่เกี่ยวข้องอยู่ 4 จุด:
+ChatDiWa ไม่ได้ลงตัวเองเป็น "โปรแกรม" ของ Windows (ไม่มี installer ไม่มีชื่อขึ้นใน Add/Remove Programs) เพราะเป็นแค่ไฟล์ที่ `run.bat` ดึงมารันชั่วคราวทุกครั้ง (โดยติดตั้งใหม่ทับของเดิมทุกครั้งที่เปิด เพื่อให้ได้โค้ดล่าสุดจาก GitHub เสมอ — ดู [ADR-0005](docs/adr/0005-npm-install-prefix-not-npx.md)) ข้อมูลที่เกี่ยวข้องอยู่ 2 จุด:
 
-1. **ไฟล์ตั้งค่า + แคชเสียงชั่วคราว + ตัวเปิด tunnel** — อยู่ในโฟลเดอร์เดียวกับ `run.bat` (เช่นโฟลเดอร์ `ChatDiWa` ที่แตกจาก zip): `chatdiwa.config.json` (การตั้งค่าทั้งหมด), `.chatdiwa-audio-cache\` (ไฟล์เสียงชั่วคราว ปกติจะว่างเปล่าเพราะลบตัวเองอัตโนมัติหลังเล่นเสร็จ) และ `.chatdiwa-bin\cloudflared.exe` (~55MB โหลดมาเฉพาะถ้าเคยเปิดใช้ลิงก์สาธารณะสำหรับ TikTok LIVE Studio)
-2. **แคชของ npx เอง** — อยู่ที่ `%LocalAppData%\npm-cache\_npx\` เป็นแคชกลางของ npm ไม่ใช่ของ ChatDiWa โดยเฉพาะ
-3. **Node.js เอง** — ถ้า `run.bat` ลงให้ผ่าน winget จะติดตั้งเป็นโปรแกรมปกติของ Windows
+1. **ทุกอย่างอยู่ในโฟลเดอร์เดียวกับ `run.bat`** (เช่นโฟลเดอร์ `ChatDiWa` ที่แตกจาก zip): `chatdiwa.config.json` (การตั้งค่าทั้งหมด), `.chatdiwa-audio-cache\` (ไฟล์เสียงชั่วคราว ปกติจะว่างเปล่าเพราะลบตัวเองอัตโนมัติหลังเล่นเสร็จ), `.chatdiwa-bin\cloudflared.exe` (~55MB โหลดมาเฉพาะถ้าเคยเปิดใช้ลิงก์สาธารณะสำหรับ TikTok LIVE Studio) และ `.chatdiwa-app\` (ตัวโปรแกรมเองที่โหลดมาจาก GitHub — โดนเขียนทับใหม่ทุกครั้งที่เปิด `run.bat`)
+2. **Node.js เอง** — ถ้า `run.bat` ลงให้ผ่าน winget จะติดตั้งเป็นโปรแกรมปกติของ Windows
 
 **ถอนการติดตั้งให้หมดจด:**
 
-1. ลบโฟลเดอร์ `ChatDiWa` ทั้งโฟลเดอร์ (มี `run.bat`, `chatdiwa.config.json`, แคชเสียง, ตัวเปิด tunnel อยู่ในนั้นหมด) — แค่นี้ก็ถือว่าถอนแล้วในทางปฏิบัติ ไม่มีอะไรทำงานเบื้องหลังหรือเก็บข้อมูลที่อื่นอีก
-2. (ไม่บังคับ) ล้างแคช npx: เปิด Terminal พิมพ์ `npm cache clean --force`
-3. (ไม่บังคับ, เฉพาะถ้าไม่ได้ใช้ Node.js ทำอย่างอื่น) ถอน Node.js: Windows Settings → Apps → หา "Node.js" → Uninstall (หรือ `winget uninstall OpenJS.NodeJS.LTS`)
+1. ลบโฟลเดอร์ `ChatDiWa` ทั้งโฟลเดอร์ (มีทุกอย่างข้างต้นอยู่ในนั้นหมด) — แค่นี้ก็ถือว่าถอนแล้วในทางปฏิบัติ ไม่มีอะไรทำงานเบื้องหลังหรือเก็บข้อมูลที่อื่นอีก
+2. (ไม่บังคับ, เฉพาะถ้าไม่ได้ใช้ Node.js ทำอย่างอื่น) ถอน Node.js: Windows Settings → Apps → หา "Node.js" → Uninstall (หรือ `winget uninstall OpenJS.NodeJS.LTS`)

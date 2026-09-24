@@ -21,7 +21,7 @@ Fading, on-screen bubbles (name + message) rendered inside the OBS View for ever
 _Avoid_: overlay view, widget
 
 **Launcher**:
-`run.bat`, the single downloadable file that checks for Node.js (asking before installing anything), then runs ChatDiWa via `npx` against a GitHub tarball URL (not the `github:` npm spec, which needs Git installed — see ADR-0003). Not a copy of the app — always defers to whatever that URL currently resolves to, so there's nothing in the Launcher itself to keep in sync with releases.
+`run.bat`, the single downloadable file that checks for Node.js (asking before installing anything), then reinstalls ChatDiWa fresh on every launch via `npm install --prefix` against a GitHub tarball URL (not the `github:` npm spec, which needs Git installed — see ADR-0003; not `npx`, which caches that URL forever after the first run and never picks up updates — see ADR-0005). Not a copy of the app — always defers to whatever that URL currently resolves to, so there's nothing in the Launcher itself to keep in sync with releases.
 _Avoid_: installer, setup script
 
 **Tunnel**:

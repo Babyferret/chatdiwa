@@ -47,10 +47,21 @@ pause
 exit /b
 
 :run
-echo Node.js found. Starting ChatDiWa (always fetches the latest version from GitHub)...
-echo npm may ask "Ok to proceed? (y)" the first time on this download - type y and press Enter.
+echo Node.js found. Fetching the latest version of ChatDiWa from GitHub...
 echo.
-call npx https://github.com/Babyferret/chatdiwa/archive/refs/heads/master.tar.gz
+set CHATDIWA_APP_DIR=%~dp0.chatdiwa-app
+if not exist "%CHATDIWA_APP_DIR%" mkdir "%CHATDIWA_APP_DIR%"
+call npm install --prefix "%CHATDIWA_APP_DIR%" https://github.com/Babyferret/chatdiwa/archive/refs/heads/master.tar.gz
+if %errorlevel% neq 0 (
+  echo.
+  echo Could not download ChatDiWa. Check your internet connection and try again.
+  pause
+  exit /b
+)
+echo.
+echo Starting ChatDiWa...
+echo.
+node "%CHATDIWA_APP_DIR%\node_modules\chatdiwa\bin\chatdiwa.js"
 echo.
 echo ChatDiWa has stopped.
 pause

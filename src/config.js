@@ -30,6 +30,7 @@ export function defaultConfig() {
     rate: 0,
     pitch: 0,
     volume: 0,
+    overlayEnabled: true,
   };
 }
 
@@ -99,6 +100,10 @@ export function sanitizeConfigUpdate(current, updates) {
     if (Number.isInteger(value) && value >= -50 && value <= 50) {
       next[field] = value;
     }
+  }
+
+  if (typeof updates.overlayEnabled === "boolean") {
+    next.overlayEnabled = updates.overlayEnabled;
   }
 
   return next;

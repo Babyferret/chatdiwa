@@ -125,3 +125,19 @@ test("POST /api/disconnect calls manager.disconnect", async () => {
     assert.equal(manager.calls.disconnect, 1);
   });
 });
+
+test("POST /api/reset disconnects and resets config to defaults", async () => {
+  await withServer(async (base, config, manager) => {
+    config.tiktokUsername = "someone";
+    config.voice = "th-TH-PremwadeeNeural";
+    config.overlayEnabled = false;
+
+    const res = await fetch(base + "/api/reset", { method: "POST" });
+
+    assert.equal(res.status, 200);
+    assert.equal(manager.calls.disconnect, 1);
+    const body = await res.json();
+    assert.deepEqual(body, defaultConfig());
+    assert.deepEqual(config, defaultConfig());
+  });
+});

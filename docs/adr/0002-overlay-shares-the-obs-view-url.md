@@ -1,0 +1,5 @@
+# Overlay shares the OBS View's URL instead of a third URL
+
+The obvious shape for an on-stream chat overlay was a new `?overlay=1` page, alongside the existing plain Control Panel and `?obs=1` audio view — three URLs, and a streamer wanting both audio and a visible overlay would add two Browser Sources in OBS. Instead the Overlay renders inside the existing `?obs=1` page, controlled by an `overlayEnabled` setting, because OBS already gives a Browser Source both a visibility toggle (eye icon — audio keeps playing while hidden, see the original OBS View design) and its own volume control in the mixer. That's every combination a streamer could want (audio+visual, audio-only, visual-only, neither) without ChatDiWa needing to model any of it itself — one Browser Source covers all four.
+
+**Considered**: a dedicated `?overlay=1` URL, rejected because it would require a second Browser Source for the common case (both audio and overlay) and duplicate a visibility/mute toggle OBS already provides for free.

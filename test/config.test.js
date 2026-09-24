@@ -79,3 +79,15 @@ test("ignores out-of-range or non-integer rate/pitch/volume", () => {
   assert.equal(next.pitch, current.pitch);
   assert.equal(next.volume, current.volume);
 });
+
+test("applies a valid overlayEnabled boolean", () => {
+  const current = { ...defaultConfig(), overlayEnabled: true };
+  const next = sanitizeConfigUpdate(current, { overlayEnabled: false });
+  assert.equal(next.overlayEnabled, false);
+});
+
+test("ignores a non-boolean overlayEnabled", () => {
+  const current = { ...defaultConfig(), overlayEnabled: true };
+  const next = sanitizeConfigUpdate(current, { overlayEnabled: "false" });
+  assert.equal(next.overlayEnabled, true);
+});

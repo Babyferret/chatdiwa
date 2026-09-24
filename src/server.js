@@ -3,7 +3,7 @@ import { readFile, unlink } from "node:fs/promises";
 import { resolve, basename } from "node:path";
 import { WebSocketServer } from "ws";
 import { AUDIO_CACHE_DIR } from "./tts.js";
-import { saveConfig, sanitizeConfigUpdate } from "./config.js";
+import { saveConfig, sanitizeConfigUpdate, defaultConfig } from "./config.js";
 
 const AUDIO_FILENAME_RE = /^[0-9a-f-]+\.mp3$/i;
 
@@ -52,6 +52,17 @@ export function startServer(port, config, manager) {
         const next = sanitizeConfigUpdate(config, updates);
         Object.assign(config, next);
         saveConfig(config);
+        broadcast({ type: "config", config });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(config));
+        return;
+      }
+
+      if (pathname === "/api/reset" && req.method === "POST") {
+        manager.disconnect();
+        Object.assign(config, defaultConfig());
+        saveConfig(config);
+        broadcast({ type: "config", config });
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify(config));
         return;

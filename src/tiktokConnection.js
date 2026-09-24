@@ -11,11 +11,34 @@ const RECONNECT_DELAYS_MS = [1000, 2000, 5000, 10000, 30000];
 // `data.user.uniqueId`, but the installed version's WebcastChatMessage type
 // (tiktok-live-proto v3) names these fields `content` and `user.displayId`.
 // Accept either shape so a docs/runtime mismatch in either direction doesn't
-// silently drop every comment.
+// silently drop every comment. Verified against a real live room: `common`
+// carries a unique `msgId` and the message's real send time (`createTime`,
+// epoch milliseconds).
 export function mapChatEvent(data) {
   return {
     user: data.user?.uniqueId ?? data.user?.displayId ?? data.user?.nickname ?? "",
     text: data.comment ?? data.content ?? "",
+    msgId: data.common?.msgId ?? null,
+    timestamp: data.common?.createTime ? Number(data.common.createTime) : Date.now(),
+  };
+}
+
+// The library's `processInitialData: false` only gates the one-time batch
+// decoded right after connecting; its WebSocket client separately listens
+// for "protoMessageFetchResult" for the life of the connection and decodes
+// through the same code path regardless of that option, so a resync at the
+// protocol level can still re-emit comments already seen. De-duplicating on
+// the message's own id closes that gap regardless of which path caused it.
+export function createDuplicateFilter(maxSize = 500) {
+  const seen = new Set();
+  return function isDuplicate(msgId) {
+    if (!msgId) return false;
+    if (seen.has(msgId)) return true;
+    seen.add(msgId);
+    if (seen.size > maxSize) {
+      seen.delete(seen.values().next().value);
+    }
+    return false;
   };
 }
 
@@ -30,6 +53,7 @@ function errorMessage(err) {
 // drop keeps retrying with backoff.
 export function createTikTokManager() {
   const emitter = new EventEmitter();
+  const isDuplicate = createDuplicateFilter();
   let connection = null;
   let reconnectTimer = null;
   let attempt = 0;
@@ -70,7 +94,7 @@ export function createTikTokManager() {
 
     connection.on(WebcastEvent.CHAT, (data) => {
       const chat = mapChatEvent(data);
-      if (chat.text) emitter.emit("chat", chat);
+      if (chat.text && !isDuplicate(chat.msgId)) emitter.emit("chat", chat);
     });
 
     // EventEmitter throws if "error" has no listener at all, which would

@@ -43,7 +43,12 @@ export async function run() {
           volume: config.volume,
         };
         const { filename } = await synthesizeToFile(item.speech, voiceConfig);
-        broadcastComment({ user: item.user, message: item.displayText, url: `/audio/${filename}` });
+        broadcastComment({
+          user: item.user,
+          message: item.displayText,
+          url: `/audio/${filename}`,
+          timestamp: item.timestamp,
+        });
       } catch (err) {
         console.error("TTS error:", err.message);
       }
@@ -67,12 +72,16 @@ export async function run() {
     // Node's EventEmitter doesn't throw on an unhandled "error" event.
   });
 
-  manager.on("chat", ({ user, text }) => {
-    const result = processComment({ user, text }, config);
+  manager.on("chat", ({ user, text, timestamp }) => {
+    const result = processComment({ user, text, timestamp }, config);
     if (!result) return;
 
     if (!result.speech) {
-      broadcastComment({ user: result.user, message: result.displayText });
+      broadcastComment({
+        user: result.user,
+        message: result.displayText,
+        timestamp: result.timestamp,
+      });
       return;
     }
 

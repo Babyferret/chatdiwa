@@ -20,9 +20,19 @@ export function processComment(comment, config) {
 
   const trigger = checkTrigger(capped.text, config);
   if (!trigger.matches) {
-    return { user: capped.user, displayText: capped.text, speech: null };
+    return {
+      user: capped.user,
+      displayText: capped.text,
+      speech: null,
+      timestamp: comment.timestamp,
+    };
   }
 
   const speech = formatSpeech({ user: capped.user, text: trigger.text }, config.template);
-  return { user: capped.user, displayText: capped.text, speech };
+  return {
+    user: capped.user,
+    displayText: capped.text,
+    speech,
+    timestamp: comment.timestamp,
+  };
 }

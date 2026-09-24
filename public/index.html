@@ -449,7 +449,7 @@
 
       // --- chat log ---
       const chatLog = document.getElementById("chatLog");
-      function appendLine({ user, message, url }) {
+      function appendLine({ user, message, url, timestamp }) {
         const empty = chatLog.querySelector(".empty");
         if (empty) empty.remove();
 
@@ -460,7 +460,9 @@
         line.className = "line" + (url ? "" : " silent");
         const timeSpan = document.createElement("span");
         timeSpan.className = "timestamp";
-        timeSpan.textContent = new Date().toLocaleTimeString([], {
+        // timestamp is the comment's real send time from TikTok (epoch ms),
+        // not when we happened to receive/process it.
+        timeSpan.textContent = new Date(timestamp ?? Date.now()).toLocaleTimeString([], {
           hour: "2-digit",
           minute: "2-digit",
         });

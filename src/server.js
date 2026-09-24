@@ -159,8 +159,8 @@ export function startServer(port, config, manager) {
     }
   }
 
-  function broadcastComment({ user, message, url = null }) {
-    broadcast({ type: "comment", user, message, url });
+  function broadcastComment({ user, message, url = null, timestamp = null }) {
+    broadcast({ type: "comment", user, message, url, timestamp });
   }
 
   manager.on("status", (status) => broadcast({ type: "status", ...status }));

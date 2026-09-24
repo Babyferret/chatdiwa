@@ -1,0 +1,19 @@
+{
+  "name": "chatdiwa",
+  "version": "0.1.0",
+  "description": "Reads TikTok LIVE chat comments aloud via TTS, output through an OBS Browser Source.",
+  "type": "module",
+  "bin": {
+    "chatdiwa": "./bin/chatdiwa.js"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "enquirer": "^2.4.1",
+    "node-edge-tts": "^1.2.10",
+    "tiktok-live-connector": "^2.5.0",
+    "ws": "^8.21.3"
+  }
+}

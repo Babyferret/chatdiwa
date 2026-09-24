@@ -11,7 +11,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "enquirer": "^2.4.1",
     "node-edge-tts": "^1.2.10",
     "tiktok-live-connector": "^2.5.0",
     "ws": "^8.21.3"

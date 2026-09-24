@@ -42,3 +42,47 @@ export function loadConfig() {
 export function saveConfig(config) {
   writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), "utf-8");
 }
+
+const VALID_VOICES = Object.values(VOICES);
+const VALID_TEMPLATES = TEMPLATE_CHOICES.map((c) => c.name);
+
+function parseWordList(value) {
+  return value
+    .split(/\r?\n|,/)
+    .map((word) => word.trim())
+    .filter((word) => word.length > 0);
+}
+
+// Only known, valid fields from `updates` are applied on top of `current`;
+// anything missing or invalid is left as-is rather than rejecting the whole
+// update, since this backs a web settings form that submits every field
+// on every save.
+export function sanitizeConfigUpdate(current, updates) {
+  const next = { ...current };
+
+  if (VALID_VOICES.includes(updates.voice)) {
+    next.voice = updates.voice;
+  }
+
+  if (VALID_TEMPLATES.includes(updates.template)) {
+    next.template = updates.template;
+  }
+
+  if (Number.isInteger(updates.maxMessageLength) && updates.maxMessageLength > 0) {
+    next.maxMessageLength = updates.maxMessageLength;
+  }
+
+  if (Number.isInteger(updates.maxQueueSize) && updates.maxQueueSize > 0) {
+    next.maxQueueSize = updates.maxQueueSize;
+  }
+
+  if (typeof updates.blockedUsers === "string") {
+    next.blockedUsers = parseWordList(updates.blockedUsers);
+  }
+
+  if (typeof updates.bannedWords === "string") {
+    next.bannedWords = parseWordList(updates.bannedWords);
+  }
+
+  return next;
+}

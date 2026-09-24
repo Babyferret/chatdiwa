@@ -72,3 +72,9 @@ A Node.js CLI application, `chatdiwa`, that:
 - Project name: **ChatDiWa**.
 - Audio architecture mirrors how TikFinity/StreamElements avoid virtual-audio-cable installs: render in a page, add that page as an OBS Browser Source, and let OBS capture its audio track directly.
 - The SETUP guide (deliverable alongside the code) must walk a non-technical friend through: installing Node.js, the one-line `npx` command, the first-run wizard, and adding the Browser Source URL to OBS.
+
+### Amendment: settings moved from terminal TUI to a web control panel
+
+The original terminal-based arrow-key settings menu (via `enquirer`) was replaced after real usage surfaced two problems: (1) `enquirer`'s named ESM export wasn't reliably detected across environments, crashing the app on first run for at least one user; (2) `enquirer` left the terminal in raw input mode afterward, so the plain `process.stdin` listener used for the `s`/`q` commands silently stopped echoing typed characters.
+
+Current design: the first-run wizard now only asks for `tiktokUsername` (via `node:readline/promises`, no `enquirer` dependency). Everything else — voice, template, length/queue limits, blocklist, banned words — is read and written through `GET`/`POST /api/config` and edited from a browser control panel (`http://localhost:<port>`, no `?obs=1`) with a scrollable chat-log tab and a settings-form tab. The OBS Browser Source URL is now `http://localhost:<port>/?obs=1`: it plays the queued TTS audio but renders no visible UI, so it can be hidden in OBS (audio keeps playing while hidden) without also hiding the control panel. Both views share one WebSocket broadcast; only the `?obs=1` view enqueues audio playback, so having the control panel open in a normal tab at the same time as the OBS source never double-plays audio. Quitting the app is now a plain `Ctrl+C` — there is no more in-app terminal command loop.

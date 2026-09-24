@@ -1,6 +1,5 @@
 import { loadConfig } from "./config.js";
 import { runFirstTimeWizard } from "./wizard.js";
-import { openSettingsMenu } from "./settingsMenu.js";
 import { startServer } from "./server.js";
 import { connectToTikTok } from "./tiktokConnection.js";
 import { processComment } from "./pipeline/index.js";
@@ -13,10 +12,11 @@ export async function run() {
     config = await runFirstTimeWizard();
   }
 
-  const { broadcastSpeech } = startServer(config.port);
+  const { broadcastSpeech } = startServer(config.port, config);
   console.log(`\nเปิดใช้งานที่ http://localhost:${config.port}`);
+  console.log(`- เปิดลิงก์นี้ในเบราว์เซอร์ปกติเพื่อดูแชท/ตั้งค่า`);
   console.log(
-    `เพิ่มเป็น Browser Source ใน OBS โดยใช้ URL นี้ เพื่อให้เสียงเข้าสตรีม\n`,
+    `- เพิ่ม http://localhost:${config.port}/?obs=1 เป็น Browser Source ใน OBS เพื่อให้เสียงเข้าสตรีม (ซ่อน source นี้ได้ เสียงยังออกปกติ)\n`,
   );
 
   const queue = createQueue({ maxSize: config.maxQueueSize });
@@ -26,10 +26,10 @@ export async function run() {
     if (draining) return;
     draining = true;
     while (queue.size > 0) {
-      const text = queue.dequeue();
+      const item = queue.dequeue();
       try {
-        const { filename } = await synthesizeToFile(text, config.voice);
-        broadcastSpeech(text, filename);
+        const { filename } = await synthesizeToFile(item.speech, config.voice);
+        broadcastSpeech(filename, { user: item.user, message: item.text });
       } catch (err) {
         console.error("TTS error:", err.message);
       }
@@ -55,21 +55,10 @@ export async function run() {
     const speech = processComment({ user, text }, config);
     if (speech) {
       console.log(`[${user}] ${text}`);
-      queue.enqueue(speech);
+      queue.enqueue({ user, text, speech });
       drainQueue();
     }
   });
 
-  console.log('พิมพ์ "s" แล้ว Enter เพื่อเปิดเมนูตั้งค่า, "q" แล้ว Enter เพื่อออก\n');
-
-  process.stdin.setEncoding("utf-8");
-  process.stdin.on("data", async (input) => {
-    const command = input.trim().toLowerCase();
-    if (command === "s") {
-      await openSettingsMenu(config);
-    } else if (command === "q") {
-      console.log("ปิดโปรแกรม...");
-      process.exit(0);
-    }
-  });
+  console.log("กด Ctrl+C เพื่อปิดโปรแกรม\n");
 }

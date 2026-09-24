@@ -51,6 +51,14 @@ test("GET /?obs=1 also serves the page (query string must not break routing)", a
   });
 });
 
+test("GET /logo.svg serves the favicon", async () => {
+  await withServer(async (base) => {
+    const res = await fetch(base + "/logo.svg");
+    assert.equal(res.status, 200);
+    assert.match(res.headers.get("content-type"), /image\/svg\+xml/);
+  });
+});
+
 test("GET /api/config returns the current config as JSON", async () => {
   await withServer(async (base, config) => {
     const res = await fetch(base + "/api/config");

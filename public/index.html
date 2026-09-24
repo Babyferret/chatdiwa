@@ -394,6 +394,22 @@
           </section>
 
           <section class="group">
+            <h2>TikTok LIVE Studio (ถ้าไม่ได้ใช้ OBS)</h2>
+            <p style="margin: 0; font-size: 13px; color: #999">
+              TikTok LIVE Studio ไม่รับลิงก์ localhost ตรงๆ ใน Link source ต้องเปิดใช้ตัวนี้เพื่อสร้างลิงก์สาธารณะชั่วคราวให้แทน
+            </p>
+            <label class="field" style="flex-direction: row; align-items: center; gap: 8px">
+              <input type="checkbox" id="tunnelEnabled" style="width: auto" />
+              เปิดใช้ลิงก์สาธารณะสำหรับ TikTok LIVE Studio
+            </label>
+            <div class="row" id="tunnelUrlRow" style="display: none; align-items: center; gap: 8px">
+              <input type="text" id="tunnelUrlInput" readonly />
+              <button type="button" class="secondary" id="copyTunnelUrlBtn">คัดลอก</button>
+            </div>
+            <div id="tunnelStatusText" style="font-size: 13px; color: #999"></div>
+          </section>
+
+          <section class="group">
             <h2>ตัวกรองอื่นๆ</h2>
             <label class="field">
               ความยาวข้อความสูงสุด (ตัวอักษร)
@@ -530,6 +546,30 @@
         connected: "เชื่อมต่อแล้ว",
         error: "เชื่อมต่อไม่สำเร็จ",
       };
+      // --- tunnel status (TikTok LIVE Studio public link) ---
+      const tunnelEnabledCheckbox = document.getElementById("tunnelEnabled");
+      const tunnelUrlRow = document.getElementById("tunnelUrlRow");
+      const tunnelUrlInput = document.getElementById("tunnelUrlInput");
+      const tunnelStatusText = document.getElementById("tunnelStatusText");
+      const TUNNEL_STATUS_LABELS = {
+        idle: "",
+        downloading: "กำลังดาวน์โหลดตัวเปิด tunnel (ครั้งแรกเท่านั้น)...",
+        connecting: "กำลังสร้างลิงก์สาธารณะ...",
+        ready: "พร้อมใช้งาน",
+        error: "เกิดข้อผิดพลาด",
+      };
+      function applyTunnelStatus({ status, url, error }) {
+        tunnelEnabledCheckbox.checked = status !== "idle";
+        tunnelStatusText.textContent =
+          status === "error" ? `${TUNNEL_STATUS_LABELS.error}: ${error || ""}` : TUNNEL_STATUS_LABELS[status] || "";
+        if (status === "ready" && url) {
+          tunnelUrlRow.style.display = "flex";
+          tunnelUrlInput.value = `${url}/?obs=1`;
+        } else {
+          tunnelUrlRow.style.display = "none";
+        }
+      }
+
       function applyStatus({ status, username, error }) {
         statusBadge.className = status;
         if (status === "connected") {
@@ -609,6 +649,8 @@
             applyStatus(msg);
           } else if (msg.type === "clear") {
             clearLog();
+          } else if (msg.type === "tunnel") {
+            applyTunnelStatus(msg);
           } else if (msg.type === "config") {
             overlayEnabled = msg.config.overlayEnabled;
             audioMuted = msg.config.audioMuted;
@@ -684,6 +726,28 @@
           applyStatus(await res.json());
         }
         loadStatus();
+
+        async function loadTunnelStatus() {
+          const res = await fetch("/api/tunnel-status");
+          applyTunnelStatus(await res.json());
+        }
+        loadTunnelStatus();
+
+        tunnelEnabledCheckbox.addEventListener("change", async () => {
+          await fetch("/api/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tunnelEnabled: tunnelEnabledCheckbox.checked }),
+          });
+        });
+
+        document.getElementById("copyTunnelUrlBtn").addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(tunnelUrlInput.value);
+          } catch {
+            window.prompt("คัดลอกลิงก์นี้ไปวางเอง:", tunnelUrlInput.value);
+          }
+        });
 
         document.getElementById("connectBtn").addEventListener("click", async () => {
           await fetch("/api/connect", {

@@ -1,0 +1,7 @@
+# Auto-managed Cloudflare Quick Tunnel for TikTok LIVE Studio
+
+TikTok LIVE Studio's "Link" source (its equivalent of OBS's Browser Source) rejects plain `localhost` URLs outright — confirmed by testing and by the TikFinity community's own documented workaround, which is to front the local server with a tunneling tool and use the tunnel's public URL instead. OBS needs none of this; only TikTok LIVE Studio users are affected, so the Tunnel is off by default (`tunnelEnabled`).
+
+**ngrok was considered and rejected**: its free tier shows an interstitial "Visit Site" warning page in front of all browser traffic, which nothing can click through on TikTok's side — the Link source would just fail to load the actual content. Cloudflare's Quick Tunnels (`cloudflared tunnel --url ...`) have no such interstitial, need no account, and were verified to support WebSocket (required — the Control Panel and OBS View both depend on it).
+
+ChatDiWa downloads `cloudflared.exe` itself on first use (into `.chatdiwa-bin/`, from Cloudflare's own "latest release" URL) and manages the tunnel process directly, rather than asking the user to install and run a separate tool by hand — consistent with the project's broader stance (also true of the Launcher's Node.js check) that a streamer shouldn't need to operate command-line tooling to use ChatDiWa. The resulting URL changes on every restart, so it's surfaced live in the Control Panel with a copy button instead of being written into any static documentation.

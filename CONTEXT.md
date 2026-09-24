@@ -21,8 +21,12 @@ Fading, on-screen bubbles (name + message) rendered inside the OBS View for ever
 _Avoid_: overlay view, widget
 
 **Launcher**:
-`run.bat`, the single downloadable file that checks for Node.js (asking before installing anything), then runs ChatDiWa via `npx`. Not a copy of the app — always defers to whatever `npx github:...` resolves to, so there's nothing in the Launcher itself to keep in sync with releases.
+`run.bat`, the single downloadable file that checks for Node.js (asking before installing anything), then runs ChatDiWa via `npx` against a GitHub tarball URL (not the `github:` npm spec, which needs Git installed — see ADR-0003). Not a copy of the app — always defers to whatever that URL currently resolves to, so there's nothing in the Launcher itself to keep in sync with releases.
 _Avoid_: installer, setup script
+
+**Tunnel**:
+A temporary public HTTPS URL (via a Cloudflare Quick Tunnel) forwarding to the local server, for TikTok LIVE Studio's Link source — which, unlike OBS's Browser Source, rejects `localhost` URLs outright (see ADR-0004). Off by default (`tunnelEnabled`); OBS users never need it. The URL changes every time the Tunnel is (re)started, so it's shown live in the Control Panel with a copy button rather than documented anywhere fixed.
+_Avoid_: ngrok, proxy
 
 **Comment**:
 A single chat message received from the connected Room, carrying a viewer's username and raw text.

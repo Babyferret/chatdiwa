@@ -23,14 +23,34 @@ function createStubManager() {
   };
 }
 
+function createStubTunnelManager() {
+  const emitter = new EventEmitter();
+  const calls = { start: [], stop: 0 };
+  let status = { status: "idle", url: null };
+  return {
+    calls,
+    start(port) {
+      calls.start.push(port);
+      status = { status: "ready", url: "https://stub.trycloudflare.com" };
+    },
+    stop() {
+      calls.stop += 1;
+      status = { status: "idle", url: null };
+    },
+    getStatus: () => status,
+    on: (event, listener) => emitter.on(event, listener),
+  };
+}
+
 async function withServer(fn) {
   const config = { ...defaultConfig(), tiktokUsername: "test", port: 0 };
   const manager = createStubManager();
-  const { server } = startServer(0, config, manager);
+  const tunnelManager = createStubTunnelManager();
+  const { server } = startServer(0, config, manager, tunnelManager);
   await new Promise((resolve) => server.once("listening", resolve));
   const { port } = server.address();
   try {
-    await fn(`http://localhost:${port}`, config, manager);
+    await fn(`http://localhost:${port}`, config, manager, tunnelManager);
   } finally {
     server.close();
   }
@@ -134,8 +154,8 @@ test("POST /api/disconnect calls manager.disconnect", async () => {
   });
 });
 
-test("POST /api/reset disconnects and resets config to defaults", async () => {
-  await withServer(async (base, config, manager) => {
+test("POST /api/reset disconnects, stops the tunnel, and resets config to defaults", async () => {
+  await withServer(async (base, config, manager, tunnelManager) => {
     config.tiktokUsername = "someone";
     config.voice = "th-TH-PremwadeeNeural";
     config.overlayEnabled = false;
@@ -144,8 +164,57 @@ test("POST /api/reset disconnects and resets config to defaults", async () => {
 
     assert.equal(res.status, 200);
     assert.equal(manager.calls.disconnect, 1);
+    assert.equal(tunnelManager.calls.stop, 1);
     const body = await res.json();
     assert.deepEqual(body, defaultConfig());
     assert.deepEqual(config, defaultConfig());
+  });
+});
+
+test("GET /api/tunnel-status returns the tunnel manager's current status", async () => {
+  await withServer(async (base) => {
+    const res = await fetch(base + "/api/tunnel-status");
+    assert.equal(res.status, 200);
+    assert.deepEqual(await res.json(), { status: "idle", url: null });
+  });
+});
+
+test("POST /api/config with tunnelEnabled:true starts the tunnel", async () => {
+  await withServer(async (base, config, manager, tunnelManager) => {
+    const res = await fetch(base + "/api/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tunnelEnabled: true }),
+    });
+    assert.equal(res.status, 200);
+    assert.deepEqual(tunnelManager.calls.start, [config.port]);
+    assert.equal(config.tunnelEnabled, true);
+  });
+});
+
+test("POST /api/config with tunnelEnabled:false stops the tunnel", async () => {
+  await withServer(async (base, config, manager, tunnelManager) => {
+    config.tunnelEnabled = true;
+    const res = await fetch(base + "/api/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tunnelEnabled: false }),
+    });
+    assert.equal(res.status, 200);
+    assert.equal(tunnelManager.calls.stop, 1);
+    assert.equal(config.tunnelEnabled, false);
+  });
+});
+
+test("POST /api/config with tunnelEnabled unchanged does not start/stop the tunnel again", async () => {
+  await withServer(async (base, config, manager, tunnelManager) => {
+    const res = await fetch(base + "/api/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tunnelEnabled: false }),
+    });
+    assert.equal(res.status, 200);
+    assert.deepEqual(tunnelManager.calls.start, []);
+    assert.equal(tunnelManager.calls.stop, 0);
   });
 });

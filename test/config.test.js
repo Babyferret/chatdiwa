@@ -103,3 +103,15 @@ test("ignores a non-boolean audioMuted", () => {
   const next = sanitizeConfigUpdate(current, { audioMuted: "true" });
   assert.equal(next.audioMuted, false);
 });
+
+test("applies a valid tunnelEnabled boolean", () => {
+  const current = { ...defaultConfig(), tunnelEnabled: false };
+  const next = sanitizeConfigUpdate(current, { tunnelEnabled: true });
+  assert.equal(next.tunnelEnabled, true);
+});
+
+test("ignores a non-boolean tunnelEnabled", () => {
+  const current = { ...defaultConfig(), tunnelEnabled: false };
+  const next = sanitizeConfigUpdate(current, { tunnelEnabled: "true" });
+  assert.equal(next.tunnelEnabled, false);
+});

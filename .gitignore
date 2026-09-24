@@ -1,3 +1,4 @@
 node_modules/
 .chatdiwa-audio-cache/
+.chatdiwa-bin/
 chatdiwa.config.json

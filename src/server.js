@@ -23,7 +23,7 @@ async function readJsonBody(req) {
   return JSON.parse(Buffer.concat(chunks).toString("utf-8") || "{}");
 }
 
-export function startServer(port, config, manager) {
+export function startServer(port, config, manager, tunnelManager) {
   const server = createServer(async (req, res) => {
     try {
       const { pathname } = new URL(req.url, "http://localhost");
@@ -68,6 +68,16 @@ export function startServer(port, config, manager) {
           res.end(JSON.stringify({ error: "Invalid JSON body" }));
           return;
         }
+        if (
+          typeof updates.tunnelEnabled === "boolean" &&
+          updates.tunnelEnabled !== config.tunnelEnabled
+        ) {
+          if (updates.tunnelEnabled) {
+            tunnelManager.start(port);
+          } else {
+            tunnelManager.stop();
+          }
+        }
         const next = sanitizeConfigUpdate(config, updates);
         Object.assign(config, next);
         saveConfig(config);
@@ -77,8 +87,15 @@ export function startServer(port, config, manager) {
         return;
       }
 
+      if (pathname === "/api/tunnel-status" && req.method === "GET") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(tunnelManager.getStatus()));
+        return;
+      }
+
       if (pathname === "/api/reset" && req.method === "POST") {
         manager.disconnect();
+        tunnelManager.stop();
         Object.assign(config, defaultConfig());
         saveConfig(config);
         broadcast({ type: "config", config });
@@ -165,6 +182,7 @@ export function startServer(port, config, manager) {
 
   manager.on("status", (status) => broadcast({ type: "status", ...status }));
   manager.on("roomChanged", () => broadcast({ type: "clear" }));
+  tunnelManager.on("status", (status) => broadcast({ type: "tunnel", ...status }));
 
   server.listen(port);
 

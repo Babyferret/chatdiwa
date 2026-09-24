@@ -32,6 +32,7 @@ export function defaultConfig() {
     volume: 0,
     overlayEnabled: true,
     audioMuted: false,
+    tunnelEnabled: false,
   };
 }
 
@@ -109,6 +110,10 @@ export function sanitizeConfigUpdate(current, updates) {
 
   if (typeof updates.audioMuted === "boolean") {
     next.audioMuted = updates.audioMuted;
+  }
+
+  if (typeof updates.tunnelEnabled === "boolean") {
+    next.tunnelEnabled = updates.tunnelEnabled;
   }
 
   return next;

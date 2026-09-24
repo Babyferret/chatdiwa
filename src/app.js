@@ -1,6 +1,7 @@
 import { loadConfig, defaultConfig, saveConfig } from "./config.js";
 import { startServer } from "./server.js";
 import { createTikTokManager } from "./tiktokConnection.js";
+import { createTunnelManager } from "./tunnel.js";
 import { processComment } from "./pipeline/index.js";
 import { createQueue } from "./pipeline/queue.js";
 import { synthesizeToFile } from "./tts.js";
@@ -14,7 +15,18 @@ export async function run() {
   }
 
   const manager = createTikTokManager();
-  const { broadcastComment } = startServer(config.port, config, manager);
+  const tunnelManager = createTunnelManager();
+  const { broadcastComment } = startServer(config.port, config, manager, tunnelManager);
+
+  tunnelManager.on("status", ({ status, url, error }) => {
+    if (status === "downloading") console.log("กำลังดาวน์โหลดตัวเปิด tunnel สาธารณะ...");
+    if (status === "ready") console.log(`ลิงก์สำหรับ TikTok LIVE Studio: ${url}/?obs=1`);
+    if (status === "error") console.error(`Tunnel error: ${error}`);
+  });
+
+  if (config.tunnelEnabled) {
+    tunnelManager.start(config.port);
+  }
 
   const controlPanelUrl = `http://localhost:${config.port}`;
   console.log(`\nเปิดใช้งานที่ ${controlPanelUrl}`);

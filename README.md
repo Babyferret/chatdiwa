@@ -9,10 +9,10 @@
 
 ## เริ่มใช้งาน
 
-ในหน้าต่าง Terminal พิมพ์คำสั่งนี้แล้วกด Enter (เปลี่ยน `<owner>` เป็นชื่อ GitHub ของเจ้าของโปรเจกต์):
+ในหน้าต่าง Terminal พิมพ์คำสั่งนี้แล้วกด Enter:
 
 ```
-npx github:<owner>/chatdiwa
+npx github:Babyferret/chatdiwa
 ```
 
 รอสักครู่ (ครั้งแรกจะโหลดไฟล์ที่จำเป็น) โปรแกรมจะถามคำถามตั้งค่า 3 ข้อ:
@@ -51,4 +51,4 @@ npx github:<owner>/chatdiwa
 
 ## ตั้งค่าใหม่ตั้งแต่ต้น
 
-ลบไฟล์ `chatdiwa.config.json` ในโฟลเดอร์ที่รันคำสั่ง แล้วรัน `npx github:<owner>/chatdiwa` ใหม่อีกครั้ง โปรแกรมจะถามคำถามตั้งค่าใหม่ทั้งหมด
+ลบไฟล์ `chatdiwa.config.json` ในโฟลเดอร์ที่รันคำสั่ง แล้วรัน `npx github:Babyferret/chatdiwa` ใหม่อีกครั้ง โปรแกรมจะถามคำถามตั้งค่าใหม่ทั้งหมด

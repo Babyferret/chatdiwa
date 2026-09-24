@@ -91,3 +91,15 @@ test("ignores a non-boolean overlayEnabled", () => {
   const next = sanitizeConfigUpdate(current, { overlayEnabled: "false" });
   assert.equal(next.overlayEnabled, true);
 });
+
+test("applies a valid audioMuted boolean", () => {
+  const current = { ...defaultConfig(), audioMuted: false };
+  const next = sanitizeConfigUpdate(current, { audioMuted: true });
+  assert.equal(next.audioMuted, true);
+});
+
+test("ignores a non-boolean audioMuted", () => {
+  const current = { ...defaultConfig(), audioMuted: false };
+  const next = sanitizeConfigUpdate(current, { audioMuted: "true" });
+  assert.equal(next.audioMuted, false);
+});

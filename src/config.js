@@ -31,6 +31,7 @@ export function defaultConfig() {
     pitch: 0,
     volume: 0,
     overlayEnabled: true,
+    audioMuted: false,
   };
 }
 
@@ -104,6 +105,10 @@ export function sanitizeConfigUpdate(current, updates) {
 
   if (typeof updates.overlayEnabled === "boolean") {
     next.overlayEnabled = updates.overlayEnabled;
+  }
+
+  if (typeof updates.audioMuted === "boolean") {
+    next.audioMuted = updates.audioMuted;
   }
 
   return next;

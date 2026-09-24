@@ -47,6 +47,18 @@
         background: #f87068;
         border-color: #f87068;
       }
+      #muteBtn {
+        padding: 6px 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #eee;
+      }
+      #muteBtn.muted {
+        background: #4a2422;
+        border-color: #f87171;
+        color: #f87171;
+      }
       #statusBadge {
         margin-left: auto;
         font-size: 13px;
@@ -261,6 +273,18 @@
       <header>
         <button data-tab="chat" class="active">แชท</button>
         <button data-tab="settings">ตั้งค่า</button>
+        <button id="muteBtn" type="button" title="ปิด/เปิดเสียง (ควบคุมฝั่ง OBS View จากที่นี่)">
+          <svg id="muteIconOn" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="4,9 8,9 12,5 12,19 8,15 4,15" fill="currentColor" stroke="none" />
+            <path d="M16 8a5 5 0 0 1 0 8" />
+            <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+          </svg>
+          <svg id="muteIconOff" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" hidden>
+            <polygon points="4,9 8,9 12,5 12,19 8,15 4,15" fill="currentColor" stroke="none" />
+            <line x1="16" y1="8" x2="22" y2="14" />
+            <line x1="22" y1="8" x2="16" y2="14" />
+          </svg>
+        </button>
         <span id="statusBadge"><span class="dot"></span><span id="statusText">ยังไม่เชื่อมต่อ</span></span>
       </header>
       <div class="panel active" id="panel-chat">
@@ -439,6 +463,18 @@
       const OVERLAY_FADE_AFTER_MS = 8000;
       const overlayContainer = document.getElementById("overlayContainer");
       let overlayEnabled = true;
+      let audioMuted = false;
+
+      // updates the mute button's icon/state; safe to call from either view
+      // even though the button is only visible (inside #app) in the control panel
+      const muteBtn = document.getElementById("muteBtn");
+      const muteIconOn = document.getElementById("muteIconOn");
+      const muteIconOff = document.getElementById("muteIconOff");
+      function updateMuteButtonUI() {
+        muteBtn.classList.toggle("muted", audioMuted);
+        muteIconOn.hidden = audioMuted;
+        muteIconOff.hidden = !audioMuted;
+      }
 
       function addOverlayBubble({ user, message }) {
         const bubble = document.createElement("div");
@@ -509,6 +545,7 @@
         playing = true;
         const url = queue.shift();
         const audio = new Audio(url);
+        audio.muted = audioMuted;
         audio.onended = () => {
           playing = false;
           playNext();
@@ -545,6 +582,8 @@
             clearLog();
           } else if (msg.type === "config") {
             overlayEnabled = msg.config.overlayEnabled;
+            audioMuted = msg.config.audioMuted;
+            updateMuteButtonUI();
           }
         };
         ws.onclose = () => setTimeout(connectWs, 1000);
@@ -558,6 +597,8 @@
         .then((res) => res.json())
         .then((config) => {
           overlayEnabled = config.overlayEnabled;
+          audioMuted = config.audioMuted;
+          updateMuteButtonUI();
         });
 
       // --- settings form + connection controls (not shown in OBS mode) ---
@@ -625,6 +666,16 @@
 
         document.getElementById("disconnectBtn").addEventListener("click", async () => {
           await fetch("/api/disconnect", { method: "POST" });
+        });
+
+        muteBtn.addEventListener("click", async () => {
+          audioMuted = !audioMuted;
+          updateMuteButtonUI();
+          await fetch("/api/config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ audioMuted }),
+          });
         });
 
         document.getElementById("resetBtn").addEventListener("click", async () => {

@@ -61,7 +61,12 @@ export function createTikTokManager() {
   }
 
   function attemptConnect() {
-    connection = new TikTokLiveConnection(username, {});
+    // processInitialData defaults to true in the library: it decodes and
+    // emits a batch of recent chat history from the initial sign response.
+    // On a reconnect (which creates a brand new connection) that replays
+    // messages already read out during the previous connection - the exact
+    // "old chat repeated" bug this disables.
+    connection = new TikTokLiveConnection(username, { processInitialData: false });
 
     connection.on(WebcastEvent.CHAT, (data) => {
       const chat = mapChatEvent(data);

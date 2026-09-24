@@ -111,6 +111,12 @@
       #chatLog .line.silent {
         opacity: 0.55;
       }
+      #chatLog .timestamp {
+        color: #666;
+        font-size: 11px;
+        margin-right: 6px;
+        font-variant-numeric: tabular-nums;
+      }
       #chatLog .user {
         color: #f87068;
         font-weight: bold;
@@ -452,11 +458,18 @@
 
         const line = document.createElement("div");
         line.className = "line" + (url ? "" : " silent");
+        const timeSpan = document.createElement("span");
+        timeSpan.className = "timestamp";
+        timeSpan.textContent = new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
         const userSpan = document.createElement("span");
         userSpan.className = "user";
         userSpan.textContent = user || "";
         const textSpan = document.createElement("span");
         textSpan.textContent = message || "";
+        line.appendChild(timeSpan);
         line.appendChild(userSpan);
         line.appendChild(textSpan);
         chatLog.appendChild(line);

@@ -1,111 +1,150 @@
-<p align="center"><img src="./public/banner.png" width="600" alt="ChatDiWa" /></p>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.png">
+    <img src="assets/banner-light.png" alt="ChatDiWa (แชทดิวะ)" width="640">
+  </picture>
+</p>
 
-# ChatDiWa
+ChatDiWa reads your TikTok LIVE chat aloud. The speech goes into your stream through a Browser Source
+in OBS or TikTok LIVE Studio, so you do not need a virtual audio cable or any other audio software.
+It runs on your own computer.
 
-อ่านแชท TikTok LIVE ออกเสียงให้อัตโนมัติ เสียงเข้าสตรีมผ่าน OBS Browser Source — **ไม่ต้องติดตั้ง virtual audio cable หรือโปรแกรมเสียงเพิ่มเติมใดๆ**
+[Download](#download) · [Adding the sound to OBS](#adding-the-sound-to-obs) · [TikTok LIVE Studio](#tiktok-live-studio) · [The control panel](#the-control-panel) · [Troubleshooting](#troubleshooting) · [Uninstalling](#uninstalling) · [ภาษาไทย](#แชทดิวะ-ภาษาไทย)
 
-## เริ่มใช้งานแบบง่ายที่สุด (แนะนำสำหรับเพื่อนที่ไม่ถนัดสายโค้ด)
+## Download
 
-1. ไปที่หน้า [Releases](https://github.com/Babyferret/chatdiwa/releases/latest) โหลดไฟล์ `ChatDiWa.zip`
-2. แตกไฟล์ zip (คลิกขวา → Extract All) จะได้โฟลเดอร์ `ChatDiWa` ที่รวมทุกอย่างไว้ในที่เดียว ไม่กระจายไฟล์ปนกับที่อื่น — จะย้ายทั้งโฟลเดอร์ไปวางไว้ที่ Desktop หรือที่ไหนก็ได้
-3. เข้าไปในโฟลเดอร์ `ChatDiWa` แล้วดับเบิลคลิก `run.bat`
-   - ถ้ายังไม่มี Node.js ในเครื่อง สคริปต์จะถามก่อนว่าจะติดตั้งให้อัตโนมัติไหม (ไม่ติดตั้งเงียบๆ โดยไม่ถาม)
-4. เสร็จแล้ว! ไฟล์ตั้งค่าทุกอย่างจะถูกเก็บไว้ในโฟลเดอร์ `ChatDiWa` เดียวกันนี้ และทุกครั้งที่ดับเบิลคลิก `run.bat` จะได้เวอร์ชันล่าสุดจาก GitHub เสมอโดยอัตโนมัติ ไม่ต้องอัปเดตเอง
+1. Open the [latest release](https://github.com/Babyferret/chatdiwa/releases/latest) and download `ChatDiWa.zip`.
+2. Extract it (right-click, then **Extract All**). You get a `ChatDiWa` folder that you can put anywhere, for example on the Desktop.
+3. Open the folder and double-click `run.bat`. If Node.js is not installed, it asks before installing it. It never installs anything silently.
+4. Your browser opens the control panel. Type your TikTok username and press **Connect**.
 
-## เริ่มใช้งานแบบพิมพ์คำสั่งเอง (สำหรับสาย dev)
+Every time you start `run.bat` it fetches the latest version from GitHub, so there is nothing to update by hand. Your settings stay in the same `ChatDiWa` folder.
 
-1. ติดตั้ง **Node.js** (เวอร์ชัน 18 ขึ้นไป): https://nodejs.org
-2. เปิด Terminal แล้วพิมพ์:
+**What you need**
+
+- Windows 10 or 11, with an internet connection.
+- OBS Studio or TikTok LIVE Studio.
+- Node.js 18 or newer. `run.bat` offers to install it.
+
+When it starts, the program prints two links:
 
 ```
-npm install --prefix chatdiwa-app https://github.com/Babyferret/chatdiwa/archive/refs/heads/master.tar.gz
-node chatdiwa-app/node_modules/chatdiwa/bin/chatdiwa.js
+Open http://localhost:3939
+- Open this link in a normal browser to see the chat, change settings and connect to TikTok
+- Add http://localhost:3939/?obs=1 as a Browser Source in OBS to put the sound into your stream
 ```
 
-(ใช้ลิงก์ tarball แทน `npm install github:Babyferret/chatdiwa` เพราะแบบหลังต้องมี **Git** ติดตั้งอยู่ในเครื่องด้วย ส่วนแบบ tarball ใช้แค่ Node.js อย่างเดียวพอ — ยังได้โค้ดล่าสุดจาก branch `master` เสมอเหมือนกัน สั่ง `npm install` ซ้ำแบบนี้ทุกครั้งก่อนรันจะได้โค้ดล่าสุดเสมอ — **อย่าใช้ `npx` กับลิงก์นี้** เพราะ npx จะแคชผลลัพธ์ไว้ตาม URL แล้วไม่เช็คซ้ำว่าของจริงเปลี่ยนไปหรือยัง ทำให้ค้างอยู่เวอร์ชันเก่าถาวรแม้รันคำสั่งเดิมซ้ำ — ดู [ADR-0005](docs/adr/0005-npm-install-prefix-not-npx.md))
+## Adding the sound to OBS
 
-ทั้งสองวิธีให้ผลเหมือนกันทุกประการ — `run.bat` แค่ห่อคำสั่งข้างบนไว้ให้ไม่ต้องเปิด Terminal เอง
+You do this once.
 
-โปรแกรมจะเริ่มทำงานทันที (ยังไม่เชื่อมต่อ TikTok จนกว่าจะกรอก username) และเปิดหน้าต่างควบคุมให้อัตโนมัติ พร้อมโชว์ 2 ลิงก์ประมาณนี้:
+1. In OBS, press `+` in the **Sources** box and choose **Browser**.
+2. Name it (for example "ChatDiWa") and press OK.
+3. Set the URL to `http://localhost:3939/?obs=1` and press OK.
 
-```
-เปิดใช้งานที่ http://localhost:3939
-- เปิดลิงก์นี้ในเบราว์เซอร์ปกติเพื่อดูแชท/ตั้งค่า/เชื่อมต่อ TikTok
-- เพิ่ม http://localhost:3939/?obs=1 เป็น Browser Source ใน OBS เพื่อให้เสียงเข้าสตรีม
-```
+New comments are now read into your stream. This one Browser Source carries both the sound and the optional overlay:
 
-## หน้าควบคุม
+| You want | Do this |
+| --- | --- |
+| Sound only | Hide the source with the eye icon. The sound keeps playing while it is hidden. |
+| Sound and overlay | Turn on **Show overlay** in the settings and show the source. The name and message appear at the bottom left and fade after 8 seconds. Only comments that were actually read aloud appear. |
+| Overlay only | Mute the source in OBS's own audio mixer. The sliders inside ChatDiWa change the voice, they do not mute it. |
 
-หน้าต่างควบคุมจะเปิดให้อัตโนมัติ (หรือเปิดลิงก์แรกเองในเบราว์เซอร์ปกติก็ได้) มี 2 แท็บ:
+Use the link with `?obs=1` for OBS only. Opened in a normal browser it makes no sound, because browsers block autoplay and OBS does not. That is expected, not a bug.
 
-- **แชท**: กล่องข้อความเลื่อนดูได้ โชว์คอมเมนต์ทุกอันที่เข้ามา (อันที่ไม่ได้อ่านออกเสียงจะดูจางกว่า)
-- **ตั้งค่า**:
-  - **การเชื่อมต่อ TikTok**: กรอก/แก้ username แล้วกด **Connect** เพื่อเชื่อมหรือสลับห้อง (ไม่ต้องรีสตาร์ทโปรแกรม) กด **Disconnect** เพื่อตัดการเชื่อมต่อเอง — สถานะปัจจุบันโชว์ตลอดที่มุมขวาบน (จุดสีเขียว = เชื่อมต่อแล้ว, เหลือง = กำลังเชื่อมต่อ, แดง = ผิดพลาด)
-  - **เสียง**: เลือกชาย/หญิง ปรับความเร็ว (rate), ระดับเสียงสูงต่ำ (pitch), ความดัง (volume) ได้ด้วย slider (-50% ถึง +50%)
-  - **รูปแบบข้อความ**: อ่านแบบ "ชื่อ พูดว่า ข้อความ" หรือ "ข้อความอย่างเดียว"
-  - **Read Mode**: เลือก "อ่านทั้งหมด" หรือ "อ่านเฉพาะที่ขึ้นต้นด้วย..." (ตั้งได้หลายตัวอักษรนำหน้า เช่น `.` และ `/`) — คอมเมนต์ที่ไม่เข้าเงื่อนไขยังโชว์ในแชทตามปกติ แค่ไม่ถูกอ่านออกเสียง
-  - **Overlay บนหน้าจอ**: เปิด/ปิดการแสดง overlay ชื่อ+ข้อความบน OBS View (ดูหัวข้อถัดไป)
-  - **TikTok LIVE Studio**: ถ้าไม่ได้ใช้ OBS ดูหัวข้อ "ใช้กับ TikTok LIVE Studio" ด้านล่าง
-  - **ตัวกรองอื่นๆ**: ความยาวข้อความสูงสุด, จำนวนคิวสูงสุด, บล็อก username, คำที่ไม่อ่านออกเสียง
-  - กด **บันทึก** มีผลทันทีโดยไม่ต้องปิดโปรแกรม
-  - กด **รีเซ็ตการตั้งค่าทั้งหมด** เพื่อล้างทุกอย่างกลับเป็นค่าเริ่มต้น (รวมถึงตัดการเชื่อมต่อ TikTok ด้วย)
+## TikTok LIVE Studio
 
-> หน้านี้**ไม่เล่นเสียง** เป็นแค่หน้าดูแชท/ตั้งค่า/เชื่อมต่อเฉยๆ (กันเสียงซ้อนกับ OBS)
+TikTok LIVE Studio calls a Browser Source a **Link** source, and it does not accept `localhost` links. ChatDiWa can create a temporary public link for it:
 
-## เพิ่มเสียง (และ Overlay) เข้า OBS (ทำครั้งเดียว)
+1. Open the **Settings** tab and find **TikTok LIVE Studio**.
+2. Tick **Enable a public link for TikTok LIVE Studio**. The first time, it downloads the tunnel helper (a few seconds).
+3. When the status says it is ready, press **Copy**.
+4. In TikTok LIVE Studio choose **+ Add source**, then **Link**, paste the link and save.
 
-1. เปิด OBS Studio
-2. ที่ช่อง **Sources** กดปุ่ม `+` แล้วเลือก **Browser** (หรือ "Browser Source")
-3. ตั้งชื่อตามใจ เช่น "ChatDiWa" แล้วกด OK
-4. ในช่อง **URL** ใส่ลิงก์ที่สอง (มี `?obs=1` ต่อท้าย) เช่น `http://localhost:3939/?obs=1`
-5. กด OK — เสร็จแล้ว! เวลามีคอมเมนต์เข้ามา เสียงจะเข้าสตรีมของคุณโดยอัตโนมัติ
+The link changes each time the program restarts or the option is switched off and on, so update the Link source whenever that happens. If you leave the program running, the same link keeps working.
 
-Browser Source อันนี้ตัวเดียวรองรับทั้งเสียงและ overlay โดยควบคุมผ่านสิ่งที่ OBS มีให้อยู่แล้ว:
+## The control panel
 
-- **อยากได้แค่เสียง ไม่โชว์อะไรบนจอ**: กดไอคอนรูปตา (👁) ข้าง Source นี้เพื่อซ่อน — เสียงยังออกปกติแม้ซ่อนอยู่
-- **อยากได้ overlay โชว์บนจอด้วย**: เปิดใช้ checkbox "แสดง overlay" ในหน้าตั้งค่า แล้วโชว์ Source ตามปกติ (ข้อความชื่อ+คอมเมนต์จะขึ้นมุมล่างซ้ายแล้วค่อยๆ จางหายไปหลัง 8 วินาที เฉพาะคอมเมนต์ที่ถูกอ่านออกเสียงจริง)
-- **อยากได้ overlay แต่ไม่เอาเสียง**: ปิด volume ของ Source นี้จาก audio mixer ของ OBS เอง (ไม่ใช่ slider ในแอปเรา เพราะ slider ในแอปคือปรับสำเนียงเสียง ไม่ใช่ mute)
+Open `http://localhost:3939`. This page never plays sound, so it cannot double up with OBS. It has two tabs:
 
-> ต้องใช้ URL ที่มี `?obs=1` สำหรับ OBS เท่านั้น (ต่างจากลิงก์หน้าควบคุม) ไม่งั้นจะไม่มีเสียงออก — และถ้าเปิด `?obs=1` ตรงๆ ในเบราว์เซอร์ปกติจะไม่มีเสียงเช่นกัน (เบราว์เซอร์ทั่วไปบล็อก autoplay แต่ OBS ไม่บล็อก) เป็นเรื่องปกติ ไม่ใช่บั๊ก
->
-> ไม่ต้องลง VB-CABLE หรือปรับ audio device ในเครื่องเลย เพราะ OBS จะจับเสียงจากหน้าเว็บนี้ตรงๆ
+- **Chat** shows every comment that arrives. Comments that were not read aloud are dimmer.
+- **Settings** has:
+  - **TikTok connection**: type a username and press **Connect** to join or switch rooms without restarting. **Disconnect** leaves the room. The dot in the top right shows the state: green is connected, yellow is connecting, red is an error.
+  - **Voice**: male or female, with rate, pitch and volume sliders (-50% to +50%).
+  - **Message format**: "name says message", or the message alone.
+  - **Read mode**: read everything, or read only comments that start with a prefix you choose (for example `.` or `/`). Other comments still show in the chat, they are just not spoken.
+  - **Overlay**, **TikTok LIVE Studio**: see the sections above.
+  - **Filters**: maximum message length, maximum queue size, blocked usernames and words that are never read.
 
-## ใช้กับ TikTok LIVE Studio (ถ้าไม่ได้ใช้ OBS)
+**Save** applies the changes at once. **Reset all settings** returns everything to the defaults and disconnects from TikTok.
 
-TikTok LIVE Studio เรียก Browser Source ว่า **"Link"** source แทน และ**ไม่รับลิงก์ `localhost` โดยตรง** (ต่างจาก OBS ที่รับได้ทุกแบบ) — ต้องเปิดใช้ตัวสร้างลิงก์สาธารณะที่มีให้ในตัวก่อน:
+After you have entered a username once, ChatDiWa reconnects to it by itself on the next start. Press `Ctrl+C` in the terminal, or close the `run.bat` window, to quit.
 
-1. ไปที่แท็บ **ตั้งค่า** → หัวข้อ **TikTok LIVE Studio**
-2. ติ๊ก **"เปิดใช้ลิงก์สาธารณะสำหรับ TikTok LIVE Studio"**
-   - ครั้งแรกจะโหลดตัวเปิด tunnel ให้อัตโนมัติ (ไม่กี่วินาที)
-   - รอจนสถานะขึ้น "พร้อมใช้งาน" จะมีลิงก์โผล่มาพร้อมปุ่ม **คัดลอก**
-3. คัดลอกลิงก์นั้น ไปวางใน TikTok LIVE Studio → **+ Add source** → เลือก **Link** → วางลิงก์ → บันทึก
+## Troubleshooting
 
-> ลิงก์นี้เปลี่ยนใหม่ทุกครั้งที่ปิดโปรแกรมแล้วเปิดใหม่ (หรือปิด/เปิด toggle นี้ใหม่) ต้องกลับมาแก้ Link source ใน TikTok LIVE Studio ใหม่ทุกครั้งที่ลิงก์เปลี่ยน — ถ้าเปิดโปรแกรมค้างไว้ตลอดจะใช้ลิงก์เดิมได้ต่อเนื่อง
+- You must be **live right now** when you press Connect. ChatDiWa only joins a live room.
+- Check the username. Copy it from your TikTok profile URL, without the `@`.
+- If the connection drops during a stream, ChatDiWa reconnects by itself. If you pressed **Disconnect** yourself, it stays disconnected until you press **Connect**.
 
-## ใช้งานระหว่างสตรีม
+## Uninstalling
 
-- เปิดโปรแกรมครั้งถัดๆ ไป ถ้าเคยกรอก username ไว้แล้ว จะเชื่อมต่ออัตโนมัติทันที ไม่ต้องกด Connect ใหม่
-- ปรับตั้งค่าได้ทุกเมื่อจากหน้าควบคุมในเบราว์เซอร์ ไม่ต้องแตะ Terminal เลย
-- กด `Ctrl+C` ใน Terminal (หรือปิดหน้าต่างที่เปิดจาก `run.bat`) เพื่อปิดโปรแกรม
+ChatDiWa is not installed as a Windows program. `run.bat` downloads it fresh on every start. Everything it keeps is in the folder that holds `run.bat`:
 
-## ถ้าเชื่อมต่อไม่ติด
+| File | What it is |
+| --- | --- |
+| `chatdiwa.config.json` | All your settings. |
+| `.chatdiwa-audio-cache\` | Temporary audio. It deletes itself after playing, so it is normally empty. |
+| `.chatdiwa-bin\cloudflared.exe` | About 55 MB. Downloaded only if you enable the public link for TikTok LIVE Studio. |
+| `.chatdiwa-app\` | The program itself, downloaded from GitHub. |
 
-- เช็คว่าคุณ**กำลังไลฟ์อยู่จริง**บน TikTok ตอนกด Connect (เชื่อมต่อกับไลฟ์ที่กำลังสดเท่านั้น)
-- เช็คว่าใส่ username ถูกต้อง (ดูจาก URL หน้าโปรไฟล์ TikTok ของคุณ ไม่ต้องมี `@`)
-- ถ้าหลุดเองระหว่างสตรีม โปรแกรมจะพยายามเชื่อมต่อใหม่ให้อัตโนมัติ — แต่ถ้า**กด Disconnect เอง** โปรแกรมจะไม่เชื่อมต่อใหม่ให้จนกว่าจะกด Connect เอง
+To remove it, delete the whole `ChatDiWa` folder. Nothing runs in the background and nothing is stored elsewhere. If `run.bat` installed Node.js for you and you use it for nothing else, remove it in Windows Settings, then Apps, or with `winget uninstall OpenJS.NodeJS.LTS`.
 
-## ตั้งค่าใหม่ตั้งแต่ต้น
+## Fonts
 
-กดปุ่ม **รีเซ็ตการตั้งค่าทั้งหมด** ในหน้าตั้งค่า — ไม่ต้องไปหาไฟล์ config ลบเองแล้ว
+The banner is drawn with TA GBA monothai by Taweechai Assawarangsitsang (TA Font), licensed under the SIL Open Font License 1.1.
 
-## ChatDiWa เก็บข้อมูลไว้ที่ไหนบ้าง / ถอนการติดตั้งยังไง
+## License
 
-ChatDiWa ไม่ได้ลงตัวเองเป็น "โปรแกรม" ของ Windows (ไม่มี installer ไม่มีชื่อขึ้นใน Add/Remove Programs) เพราะเป็นแค่ไฟล์ที่ `run.bat` ดึงมารันชั่วคราวทุกครั้ง (โดยติดตั้งใหม่ทับของเดิมทุกครั้งที่เปิด เพื่อให้ได้โค้ดล่าสุดจาก GitHub เสมอ — ดู [ADR-0005](docs/adr/0005-npm-install-prefix-not-npx.md)) ข้อมูลที่เกี่ยวข้องอยู่ 2 จุด:
+ChatDiWa is released under the MIT License.
 
-1. **ทุกอย่างอยู่ในโฟลเดอร์เดียวกับ `run.bat`** (เช่นโฟลเดอร์ `ChatDiWa` ที่แตกจาก zip): `chatdiwa.config.json` (การตั้งค่าทั้งหมด), `.chatdiwa-audio-cache\` (ไฟล์เสียงชั่วคราว ปกติจะว่างเปล่าเพราะลบตัวเองอัตโนมัติหลังเล่นเสร็จ), `.chatdiwa-bin\cloudflared.exe` (~55MB โหลดมาเฉพาะถ้าเคยเปิดใช้ลิงก์สาธารณะสำหรับ TikTok LIVE Studio) และ `.chatdiwa-app\` (ตัวโปรแกรมเองที่โหลดมาจาก GitHub — โดนเขียนทับใหม่ทุกครั้งที่เปิด `run.bat`)
-2. **Node.js เอง** — ถ้า `run.bat` ลงให้ผ่าน winget จะติดตั้งเป็นโปรแกรมปกติของ Windows
+---
 
-**ถอนการติดตั้งให้หมดจด:**
+## แชทดิวะ (ภาษาไทย)
 
-1. ลบโฟลเดอร์ `ChatDiWa` ทั้งโฟลเดอร์ (มีทุกอย่างข้างต้นอยู่ในนั้นหมด) — แค่นี้ก็ถือว่าถอนแล้วในทางปฏิบัติ ไม่มีอะไรทำงานเบื้องหลังหรือเก็บข้อมูลที่อื่นอีก
-2. (ไม่บังคับ, เฉพาะถ้าไม่ได้ใช้ Node.js ทำอย่างอื่น) ถอน Node.js: Windows Settings → Apps → หา "Node.js" → Uninstall (หรือ `winget uninstall OpenJS.NodeJS.LTS`)
+อ่านแชท TikTok LIVE ออกเสียงให้อัตโนมัติ เสียงเข้าสตรีมผ่าน Browser Source ของ OBS หรือ TikTok LIVE Studio
+ไม่ต้องติดตั้ง virtual audio cable หรือโปรแกรมเสียงเพิ่ม และทำงานบนเครื่องของคุณเองทั้งหมด
+
+### ดาวน์โหลดและเริ่มใช้งาน
+
+1. เปิด[หน้า release ล่าสุด](https://github.com/Babyferret/chatdiwa/releases/latest) แล้วโหลด `ChatDiWa.zip`
+2. แตกไฟล์ (คลิกขวา → Extract All) จะได้โฟลเดอร์ `ChatDiWa` วางไว้ที่ใดก็ได้
+3. ดับเบิลคลิก `run.bat` ถ้ายังไม่มี Node.js สคริปต์จะถามก่อนว่าจะติดตั้งให้ไหม
+4. เบราว์เซอร์จะเปิดหน้าควบคุม กรอก username TikTok แล้วกด **Connect**
+
+ทุกครั้งที่เปิด `run.bat` จะได้เวอร์ชันล่าสุดจาก GitHub เอง การตั้งค่าเก็บอยู่ในโฟลเดอร์ `ChatDiWa` เดียวกัน
+
+### เพิ่มเสียงเข้า OBS
+
+ใน OBS กด `+` ที่ช่อง **Sources** เลือก **Browser** แล้วใส่ URL `http://localhost:3939/?obs=1` ทำครั้งเดียว
+
+- เสียงอย่างเดียว: ซ่อน Source ด้วยไอคอนรูปตา เสียงยังออกตามปกติ
+- เสียงและ Overlay: เปิด "แสดง overlay" ในหน้าตั้งค่า ชื่อและข้อความจะขึ้นมุมล่างซ้ายและจางหายใน 8 วินาที เฉพาะคอมเมนต์ที่ถูกอ่านจริง
+- Overlay อย่างเดียว: ปิดเสียงของ Source นี้ที่ audio mixer ของ OBS
+
+ใช้ลิงก์ที่มี `?obs=1` กับ OBS เท่านั้น ถ้าเปิดในเบราว์เซอร์ปกติจะไม่มีเสียง ซึ่งเป็นเรื่องปกติ
+
+### ใช้กับ TikTok LIVE Studio
+
+TikTok LIVE Studio ไม่รับลิงก์ `localhost` ให้ไปที่ **ตั้งค่า** → **TikTok LIVE Studio** แล้วติ๊ก "เปิดใช้ลิงก์สาธารณะสำหรับ TikTok LIVE Studio" รอสถานะ "พร้อมใช้งาน" กด **คัดลอก** แล้วนำไปวางที่ **+ Add source** → **Link** ลิงก์จะเปลี่ยนทุกครั้งที่เปิดโปรแกรมใหม่ ต้องแก้ใน TikTok LIVE Studio ให้ตรงทุกครั้ง
+
+### หน้าควบคุม
+
+เปิดที่ `http://localhost:3939` หน้านี้ไม่เล่นเสียง มี 2 แท็บ คือ **แชท** (ดูคอมเมนต์ทั้งหมด อันที่ไม่ถูกอ่านจะจางกว่า) และ **ตั้งค่า** (การเชื่อมต่อ TikTok, เสียงชาย/หญิง, rate, pitch, volume, รูปแบบข้อความ, Read Mode, Overlay, ตัวกรอง) กด **บันทึก** มีผลทันที กด **รีเซ็ตการตั้งค่าทั้งหมด** เพื่อกลับเป็นค่าเริ่มต้นและตัดการเชื่อมต่อ TikTok
+
+### ถ้าเชื่อมต่อไม่ติด
+
+ต้องกำลังไลฟ์อยู่จริงตอนกด Connect และใส่ username ให้ถูก (ไม่ต้องมี `@`) ถ้าหลุดเองโปรแกรมจะเชื่อมใหม่ให้ แต่ถ้ากด Disconnect เอง จะไม่เชื่อมใหม่จนกว่าจะกด Connect
+
+### การถอนการติดตั้ง
+
+ลบโฟลเดอร์ `ChatDiWa` ทั้งโฟลเดอร์ ไม่มีอะไรทำงานเบื้องหลังหรือเก็บข้อมูลที่อื่น ถ้าต้องการถอน Node.js ด้วย ให้ไปที่ Windows Settings → Apps หรือใช้ `winget uninstall OpenJS.NodeJS.LTS`

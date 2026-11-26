@@ -3,3 +3,10 @@ node_modules/
 .chatdiwa-bin/
 .chatdiwa-app/
 chatdiwa.config.json
+
+# agent / local tooling files
+CLAUDE.md
+.claude/
+.scratch/
+docs/agents/
+docs/DEVELOPING.md

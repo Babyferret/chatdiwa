@@ -115,3 +115,24 @@ test("ignores a non-boolean tunnelEnabled", () => {
   const next = sanitizeConfigUpdate(current, { tunnelEnabled: "true" });
   assert.equal(next.tunnelEnabled, false);
 });
+
+test("loadConfig replaces an unusable port with the default", async () => {
+  const { writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { loadConfig } = await import("../src/config.js");
+  const path = join(tmpdir(), `chatdiwa-config-test-${process.pid}.json`);
+  const previous = process.env.CHATDIWA_CONFIG_PATH;
+  process.env.CHATDIWA_CONFIG_PATH = path;
+  try {
+    for (const port of [0, -1, 70000, "3939", null]) {
+      writeFileSync(path, JSON.stringify({ port }));
+      assert.equal(loadConfig().port, defaultConfig().port);
+    }
+    writeFileSync(path, JSON.stringify({ port: 4000 }));
+    assert.equal(loadConfig().port, 4000);
+  } finally {
+    if (previous === undefined) delete process.env.CHATDIWA_CONFIG_PATH;
+    else process.env.CHATDIWA_CONFIG_PATH = previous;
+  }
+});

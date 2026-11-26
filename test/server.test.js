@@ -1,8 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { startServer } from "../src/server.js";
 import { defaultConfig } from "../src/config.js";
+
+// The server saves settings to disk; keep that away from the real config file.
+process.env.CHATDIWA_CONFIG_PATH = join(tmpdir(), `chatdiwa-test-${process.pid}.json`);
 
 function createStubManager() {
   const emitter = new EventEmitter();

@@ -36,16 +36,26 @@ export function defaultConfig() {
   };
 }
 
+// Read at call time so tests can point at a temp file instead of the real one.
+function configPath() {
+  return process.env.CHATDIWA_CONFIG_PATH || CONFIG_PATH;
+}
+
 export function loadConfig() {
-  if (!existsSync(CONFIG_PATH)) {
+  const path = configPath();
+  if (!existsSync(path)) {
     return null;
   }
-  const raw = readFileSync(CONFIG_PATH, "utf-8");
-  return { ...defaultConfig(), ...JSON.parse(raw) };
+  const config = { ...defaultConfig(), ...JSON.parse(readFileSync(path, "utf-8")) };
+  // Port 0 means "any free port", which leaves nobody knowing the URL.
+  if (!Number.isInteger(config.port) || config.port < 1 || config.port > 65535) {
+    config.port = defaultConfig().port;
+  }
+  return config;
 }
 
 export function saveConfig(config) {
-  writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), "utf-8");
+  writeFileSync(configPath(), JSON.stringify(config, null, 2), "utf-8");
 }
 
 const VALID_VOICES = Object.values(VOICES);
